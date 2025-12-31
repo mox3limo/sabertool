@@ -27,6 +27,8 @@ import {
     setupAutoSave
 } from './core/storage.js';
 
+import { exportAsImage } from './modules/export.js';
+
 // --- Windowへの登録 ---
 
 // UI & State
@@ -96,6 +98,7 @@ window.showHistoryModal = showHistoryModal;
 window.hideHistoryModal = hideHistoryModal;
 window.restoreHistory = restoreHistory;
 window.deleteHistory = deleteHistory;
+window.exportAsImage = exportAsImage;
 
 // 初期化処理
 document.addEventListener('DOMContentLoaded', () => {

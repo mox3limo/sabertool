@@ -1,46 +1,108 @@
 import { state } from './state.js';
 
-// ヘルパー：画面上の全データを収集 (内部でのみ使用するのでexportしない)
-function collectAllData() {
-    const data = { 
-        league: state.currentLeague, // stateモジュールから取得
-        batter: {}, pitcher: {}, team: {}
-    };
-    document.querySelectorAll('input, select').forEach(el => {
-        if (el.id) {
-            if (el.id.startsWith('b_') || el.id === 'batter_pf') data.batter[el.id] = el.value;
-            else if (el.id.startsWith('p_')) data.pitcher[el.id] = el.value;
-            else if (el.id.startsWith('t_')) data.team[el.id] = el.value;
-        }
-    });
-    return data;
-}
+// 画像として保存する関数 (html2canvas使用・垂直位置 最終調整版)
+export async function exportAsImage(elementId, fileName = 'analysis_result.png') {
+    const targetElement = document.getElementById(elementId);
+    if (!targetElement) {
+        alert('保存対象の要素が見つかりません');
+        return;
+    }
 
-function getText(id) {
-    return document.getElementById(id)?.innerText || '';
-}
+    if (typeof html2canvas === 'undefined') {
+        alert('エラー: html2canvasライブラリが読み込まれていません。\nindex.htmlにスクリプトタグを追加してください。');
+        return;
+    }
 
-function downloadBlob(blob, filename) {
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = filename;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-}
+    try {
+        const canvas = await html2canvas(targetElement, {
+            scale: 3, // 高画質設定
+            backgroundColor: '#ffffff',
+            logging: false,
+            useCORS: true,
+            
+            onclone: (clonedDoc) => {
+                const clonedTarget = clonedDoc.getElementById(elementId);
+                const originalInputs = targetElement.querySelectorAll('input, select');
+                const clonedInputs = clonedTarget.querySelectorAll('input, select');
 
-// クリップボードコピー
-export function copyCurrentProfileToClipboard() {
-    const data = collectAllData();
-    const json = JSON.stringify(data, null, 2);
-    // ... (既存のコピー処理) ...
-}
+                clonedInputs.forEach((input, index) => {
+                    const original = originalInputs[index];
+                    const style = window.getComputedStyle(original);
+                    
+                    // 値の取得
+                    let value = input.value;
+                    if (input.tagName === 'SELECT') {
+                        value = input.options[input.selectedIndex]?.text || value;
+                    }
 
-// エクスポート実行
-export function exportData(format) {
-    const data = collectAllData();
-    // ... (既存のJSON/CSV生成処理) ...
-    // downloadBlob(...) を呼び出し
+                    // inputの代わりになるdivを作成
+                    const div = clonedDoc.createElement('div');
+                    div.innerText = value;
+
+                    // --- スタイルのコピー ---
+                    div.style.boxSizing = 'border-box';
+                    div.style.width = style.width;
+                    div.style.height = style.height;
+                    
+                    // 枠線・背景・フォント
+                    div.style.border = style.border;
+                    div.style.borderTopWidth = style.borderTopWidth;
+                    div.style.borderBottomWidth = style.borderBottomWidth;
+                    div.style.borderLeftWidth = style.borderLeftWidth;
+                    div.style.borderRightWidth = style.borderRightWidth;
+                    div.style.borderStyle = style.borderStyle;
+                    div.style.borderColor = style.borderColor;
+                    div.style.borderRadius = style.borderRadius;
+                    div.style.backgroundColor = style.backgroundColor;
+                    div.style.color = style.color;
+                    div.style.fontFamily = style.fontFamily;
+                    div.style.fontSize = style.fontSize;
+                    div.style.fontWeight = style.fontWeight;
+                    div.style.letterSpacing = style.letterSpacing;
+                    
+                    // ★修正ポイント: 上下配置の最適化★
+                    // 1. Flexboxで中央揃えを指定
+                    div.style.display = 'flex';
+                    div.style.alignItems = 'center'; 
+                    
+                    // 2. 上下のパディングは強制的にゼロにする（これがズレの元凶）
+                    div.style.paddingTop = '0px'; 
+                    div.style.paddingBottom = '0px';
+                    // 左右のパディングのみ元のスタイルを継承
+                    div.style.paddingLeft = style.paddingLeft;
+                    div.style.paddingRight = style.paddingRight;
+                    
+                    // 3. 行間を「1.1」に固定
+                    // ここが重要です。元のline-heightやheight継承をやめ、文字の高さギリギリにします。
+                    // これにより、Flexboxが「文字本体」を正確に中央に配置できるようになります。
+                    div.style.lineHeight = '1.1';
+                    
+                    // 左右配置
+                    if (style.textAlign === 'center') {
+                        div.style.justifyContent = 'center';
+                    } else if (style.textAlign === 'right') {
+                        div.style.justifyContent = 'flex-end';
+                    } else {
+                        div.style.justifyContent = 'flex-start';
+                    }
+
+                    // 置換実行
+                    if (input.parentNode) {
+                        input.parentNode.replaceChild(div, input);
+                    }
+                });
+            }
+        });
+
+        const link = document.createElement('a');
+        link.download = fileName;
+        link.href = canvas.toDataURL('image/png');
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+
+    } catch (e) {
+        console.error('Image Export Failed:', e);
+        alert('画像の保存に失敗しました。\n' + e.message);
+    }
 }

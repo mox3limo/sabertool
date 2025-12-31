@@ -17,6 +17,8 @@
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#4f46e5">
     <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/2643/2643503.png">
+
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 </head>
 <body>
 
@@ -597,12 +599,15 @@
                 </div>
             </div>
 
-            <div class="mt-6 glass-panel p-6 border-t-4 border-indigo-500">
-                <div class="flex justify-between items-center mb-4">
+            <div class="mt-6 glass-panel p-6 border-t-4 border-indigo-500" id="team_lineup_card"> <div class="flex justify-between items-center mb-4">
                     <h3 class="text-lg font-bold text-slate-700 uppercase">
                         <i class="fa-solid fa-list-ol mr-2 text-indigo-500"></i>Lineup Optimizer
                     </h3>
-                    <div class="space-x-2">
+                    <div class="space-x-2 flex items-center">
+                        <button onclick="exportAsImage('team_lineup_card', 'my_lineup.png')" class="mr-2 px-2 py-1 text-slate-400 hover:text-indigo-600 transition" title="画像を保存">
+                            <i class="fa-solid fa-camera text-lg"></i>
+                        </button>
+                        
                         <button onclick="optimizeLineup('sabermetrics')" class="px-3 py-1 text-xs font-bold text-white bg-indigo-600 rounded hover:bg-indigo-700 shadow transition">
                             <i class="fa-solid fa-wand-magic-sparkles mr-1"></i>セイバー理論で並替
                         </button>
@@ -611,7 +616,7 @@
                         </button>
                     </div>
                 </div>
-
+                
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
                     <div class="lg:col-span-2 overflow-x-auto">
                         <table class="w-full text-sm text-left border-collapse">
@@ -626,13 +631,13 @@
                                 </tr>
                             </thead>
                             <tbody id="lineup_tbody">
-                                </tbody>
+                            </tbody>
                         </table>
                         <div class="mt-2 text-[10px] text-slate-400 text-right">
                             ※入力すると即座に予想得点が再計算されます
                         </div>
                     </div>
-
+                    
                     <div class="space-y-4">
                         <div class="bg-slate-800 text-white p-5 rounded-xl shadow-lg relative overflow-hidden">
                             <div class="absolute top-0 right-0 p-4 opacity-10">
@@ -668,9 +673,12 @@
                                 <span>勝率(vs 3.5点): <span id="sim_win_rate">--</span>%</span>
                             </div>
                         </div>
-            
+        
                         <button onclick="clearLineup()" class="w-full py-2 text-xs text-red-400 hover:text-red-600 border border-red-100 hover:bg-red-50 rounded transition">
                             入力をリセット
+                        </button>
+                        <button onclick="exportAsImage('lineup-section', 'lineup_analysis.png')" data-html2canvas-ignore class="ml-2 px-3 py-2 bg-slate-600 text-white text-xs font-bold rounded hover:bg-slate-700 transition">
+                            <i class="fa-solid fa-camera"></i>
                         </button>
                     </div>
                 </div>
@@ -799,8 +807,11 @@
                     </div>
                 </div>
             </div>
-            <div class="lg:col-span-8 glass-panel p-6 h-[450px]">
-                <h3 class="text-sm font-bold text-slate-700 uppercase mb-4">能力比較レーダーチャート</h3>
+            <div class="lg:col-span-8 glass-panel p-6 h-[450px]" id="comparison_card"> <div class="flex justify-between items-center mb-4"> <h3 class="text-sm font-bold text-slate-700 uppercase">能力比較レーダーチャート</h3>
+                    <button onclick="exportAsImage('comparison_card', 'comparison_chart.png')" class="text-slate-400 hover:text-indigo-600 transition p-1" title="画像を保存">
+                        <i class="fa-solid fa-camera text-lg"></i>
+                    </button>
+                </div>
                 <div class="relative w-full h-[320px] flex justify-center"><canvas id="radarChart"></canvas></div>
                 <p class="text-[10px] text-center text-slate-400 mt-2" id="chart_avg_label">比較対象: セ・リーグ平均</p>
             </div>
