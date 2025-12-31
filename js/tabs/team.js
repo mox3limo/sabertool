@@ -223,3 +223,154 @@ export function clearLineup() {
     renderLineupTable();
     calcLineupScore();
 }
+
+// ==========================================
+// Monte Carlo Simulation
+// ==========================================
+
+let simChartInstance = null;
+
+export function runLineupSimulation() {
+    const games = 1000;
+    const scores = {};
+    let totalScore = 0;
+    let wins = 0; // 仮想敵(3.5点)に勝った数
+
+    // 簡易ステータス変換 (OBP/SLG -> 確率)
+    const players = lineupData.map(d => {
+        // 推定打率 (OBPから逆算、リーグ平均的な四球率を仮定)
+        const estAvg = Math.max(0.150, d.obp - 0.060); 
+        // 推定ISO (SLG - AVG)
+        const estIso = Math.max(0, d.slg - estAvg);
+        
+        // 確率分布の作成
+        const probBB = d.obp - estAvg; // 四球率
+        const probHit = estAvg;        // 安打率
+        const probOut = 1 - d.obp;     // 凡退率
+        
+        // ヒットの内訳 (ISOの大きさで長打率を変える簡易モデル)
+        // HR割合はISOに依存
+        const hrRatio = Math.min(0.25, estIso * 0.8); 
+        const twoBaseRatio = Math.min(0.30, estIso * 1.0);
+        
+        return {
+            probOut: probOut,
+            probBB: probOut + probBB,
+            prob1B: probOut + probBB + (probHit * (1 - hrRatio - twoBaseRatio)),
+            prob2B: probOut + probBB + (probHit * (1 - hrRatio)),
+            // probHR is 1.0
+        };
+    });
+
+    for (let g = 0; g < games; g++) {
+        let gameScore = 0;
+        let currentBatter = 0;
+
+        for (let inning = 1; inning <= 9; inning++) {
+            let outs = 0;
+            let bases = [0, 0, 0]; // 1塁, 2塁, 3塁 (0=なし, 1=あり)
+
+            while (outs < 3) {
+                const p = players[currentBatter];
+                const roll = Math.random();
+
+                if (roll < p.probOut) {
+                    // アウト
+                    outs++;
+                } else if (roll < p.probBB) {
+                    // 四球 (押し出し処理)
+                    if (bases[0]) {
+                        if (bases[1]) {
+                            if (bases[2]) {
+                                gameScore++; // 押し出し
+                            }
+                            bases[2] = 1;
+                        }
+                        bases[1] = 1;
+                    }
+                    bases[0] = 1;
+                } else {
+                    // ヒット系の共通処理 (ランナー生還判定)
+                    let hitScore = 0;
+                    
+                    if (roll < p.prob1B) {
+                        // 単打 (2塁ランナーは50%で生還と仮定)
+                        hitScore += bases[2];
+                        if (bases[1]) {
+                             // 2塁ランナーの本塁生還率 (簡易)
+                             if (Math.random() > 0.4) { hitScore++; bases[1]=0; } else { bases[2]=1; bases[1]=0; }
+                        }
+                        bases[2] = bases[1]; // 2塁→3塁 (上記で処理済みだが念のため)
+                        if(bases[0]) bases[1] = 1; // 1塁→2塁
+                        bases[0] = 1;
+                    } else if (roll < p.prob2B) {
+                        // 二塁打
+                        hitScore += bases[2] + bases[1]; // 2,3塁は生還
+                        if (bases[0]) { hitScore++; bases[0]=0; } // 1塁も生還
+                        bases[2] = 0; bases[1] = 1; bases[0] = 0;
+                    } else {
+                        // 本塁打
+                        hitScore += bases[0] + bases[1] + bases[2] + 1;
+                        bases = [0, 0, 0];
+                    }
+                    gameScore += hitScore;
+                }
+
+                currentBatter = (currentBatter + 1) % 9;
+            }
+        }
+        
+        scores[gameScore] = (scores[gameScore] || 0) + 1;
+        totalScore += gameScore;
+        if (gameScore >= 4) wins++; // 3.5点を基準に勝敗判定
+    }
+
+    // 結果表示
+    document.getElementById('sim_avg_score').innerText = (totalScore / games).toFixed(2);
+    document.getElementById('sim_win_rate').innerText = ((wins / games) * 100).toFixed(1);
+
+    drawSimChart(scores, games);
+}
+
+function drawSimChart(scores, games) {
+    const ctx = document.getElementById('simChart');
+    if (!ctx) return;
+
+    // 0点〜10点までの分布を作成
+    const labels = [];
+    const data = [];
+    for (let i = 0; i <= 10; i++) {
+        labels.push(i + '点');
+        data.push(((scores[i] || 0) / games * 100).toFixed(1));
+    }
+    // 11点以上をまとめる
+    let over10 = 0;
+    Object.keys(scores).forEach(s => { if (parseInt(s) > 10) over10 += scores[s]; });
+    labels.push('11+');
+    data.push((over10 / games * 100).toFixed(1));
+
+    if (simChartInstance) simChartInstance.destroy();
+
+    simChartInstance = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: '確率 (%)',
+                data: data,
+                backgroundColor: 'rgba(79, 70, 229, 0.6)',
+                borderColor: 'rgba(79, 70, 229, 1)',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+                y: { beginAtZero: true, display: false },
+                x: { grid: { display: false }, ticks: { font: { size: 9 } } }
+            }
+        }
+    });
+}

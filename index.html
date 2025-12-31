@@ -647,6 +647,23 @@
                                 <li><i class="fa-solid fa-circle-check text-green-500 mr-2"></i>データを入力してください。</li>
                             </ul>
                         </div>
+
+                        <div class="mt-4 bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                            <h4 class="text-xs font-bold text-slate-500 mb-2 border-b pb-2">得点力シミュレーション</h4>
+                            <div class="flex justify-between items-center mb-2">
+                                <div class="text-[10px] text-slate-400">1000試合試行時の得点分布</div>
+                                <button onclick="runLineupSimulation()" class="px-3 py-1 bg-indigo-600 text-white text-xs font-bold rounded hover:bg-indigo-700 transition">
+                                    <i class="fa-solid fa-play mr-1"></i>実行
+                                </button>
+                            </div>
+                            <div class="relative w-full h-32">
+                                <canvas id="simChart"></canvas>
+                            </div>
+                            <div class="flex justify-between mt-2 text-[10px] font-bold text-slate-600">
+                                <span>平均: <span id="sim_avg_score">--</span>点</span>
+                                <span>勝率(vs 3.5点): <span id="sim_win_rate">--</span>%</span>
+                            </div>
+                        </div>
             
                         <button onclick="clearLineup()" class="w-full py-2 text-xs text-red-400 hover:text-red-600 border border-red-100 hover:bg-red-50 rounded transition">
                             入力をリセット

@@ -12,6 +12,8 @@ import { calcPrediction, calcCareer, toggleSeasonMode } from './tabs/prediction.
 import { toggleCompMode, findSimilarPlayer, selectSimilar, initComparisonChart } from './tabs/comparison.js';
 import { calcConstant, applyConstant, initTools } from './tabs/tools.js';
 
+import { runLineupSimulation } from './tabs/team.js';
+
 import { openSmartInputModal, closeSmartInputModal, applySmartInput } from './modules/smartInput.js';
 
 import { applySettingsFromUI, resetSettingsUI } from './tabs/tools.js';
@@ -84,6 +86,8 @@ window.restoreHistory = restoreHistory;
 window.deleteHistory = deleteHistory;
 
 window.togglePanel = togglePanel;
+
+window.runLineupSimulation = runLineupSimulation;
 
 document.addEventListener('DOMContentLoaded', () => {
     if(typeof tippy !== 'undefined') tippy('[data-tippy-content]', { allowHTML: true, theme: 'custom' });
