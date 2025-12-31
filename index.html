@@ -1,0 +1,838 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Output Sabermetrics</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+    
+    <script src="https://unpkg.com/@popperjs/core@2"></script>
+    <script src="https://unpkg.com/tippy.js@6"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+    <div class="max-w-7xl mx-auto p-4 md:p-8">
+        <header class="flex flex-col md:flex-row justify-between items-center mb-6 bg-white p-5 rounded-xl shadow-sm border border-slate-100">
+            <div class="flex items-center gap-4 mb-4 md:mb-0 w-full md:w-auto">
+                <div class="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center text-white text-lg shadow-lg"><i class="fa-solid fa-chart-line"></i></div>
+                <div>
+                    <h1 class="text-lg md:text-xl font-bold text-slate-800">Output Sabermetrics <span class="text-xs bg-slate-100 px-2 py-1 rounded text-slate-500 ml-2">v3</span></h1>
+                    <p class="text-xs text-slate-500 font-medium">Advanced Analytics & Prediction Tool</p>
+                </div>
+            </div>
+            
+            <nav class="nav-container w-full md:w-auto">
+                <button class="nav-btn active" onclick="switchTab('batter', this)"><i class="fa-solid fa-baseball-bat-ball"></i>打撃</button>
+                <button class="nav-btn" onclick="switchTab('pitcher', this)"><i class="fa-solid fa-baseball"></i>投手</button>
+                <button class="nav-btn" onclick="switchTab('team', this)"><i class="fa-solid fa-users"></i>チーム</button>
+                <button class="nav-btn" onclick="switchTab('prediction', this)"><i class="fa-solid fa-arrow-trend-up"></i>予測</button>
+                <button class="nav-btn" onclick="switchTab('comparison', this)"><i class="fa-solid fa-scale-balanced"></i>比較</button>
+                <button class="nav-btn" onclick="switchTab('tools', this)"><i class="fa-solid fa-calculator"></i>計算</button>
+            </nav>
+            
+            <div class="flex items-center">
+                <button onclick="switchTab('tools', document.querySelectorAll('.nav-btn')[5])" class="w-10 h-10 rounded-full bg-slate-100 hover:bg-slate-200 transition flex items-center justify-center mr-2 text-slate-500" title="計算係数の設定">
+                    <i class="fa-solid fa-gear"></i>
+                </button>
+                <button id="dark_mode_btn" onclick="toggleDarkMode()" class="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center transition hover:bg-slate-200" title="ダークモード切替">
+                    <i class="fa-solid fa-moon text-slate-400"></i>
+                </button>
+            </div>
+        </header>
+
+        <div class="mb-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+            <div class="flex flex-wrap gap-2 gap-2 items-center">
+                <div class="bg-white p-1 rounded-lg border border-slate-200 shadow-sm inline-flex items-center">
+                    <select id="profile_selector" class="text-xs font-bold px-3 py-1.5 bg-transparent border-0 outline-none text-slate-700" onchange="loadProfile()">
+                        <option value="default">デフォルト</option>
+                    </select>
+                    <button onclick="showSaveProfileModal()" class="px-2 py-1 text-xs text-blue-600 hover:bg-blue-50 rounded" title="プロファイル保存">
+                        <i class="fa-solid fa-floppy-disk"></i>
+                    </button>
+                    <button onclick="deleteCurrentProfile()" class="px-2 py-1 text-xs text-red-600 hover:bg-red-50 rounded" title="プロファイル削除">
+                        <i class="fa-solid fa-trash"></i>
+                    </button>
+                    <div id="autosave_container" class="ml-3 flex items-center gap-2">
+                        <span id="autosave_status" class="text-xs text-slate-400">未保存</span>
+                            <button id="autosave_retry" class="hidden text-xs text-red-600 px-2 py-0.5 rounded border border-red-100 bg-red-50" title="再試行">再試行</button>
+                            <button id="autosave_history_btn" class="text-xs text-slate-500 px-2 py-0.5 rounded border border-slate-100 bg-white" title="履歴">履歴</button>
+                        <button id="run_tests_btn" class="text-xs text-white px-2 py-0.5 rounded bg-indigo-600 ml-2" title="テスト実行">テスト実行</button>
+                    </div>
+                </div>
+                <div class="relative inline-block">
+                    <button onclick="toggleExportMenu()" class="px-3 py-1.5 text-xs font-bold rounded-md bg-green-100 text-green-700 hover:bg-green-200 transition-colors">
+                        <i class="fa-solid fa-download mr-1"></i>エクスポート <i class="fa-solid fa-chevron-down ml-1 text-[10px]"></i>
+                    </button>
+                    <div id="export_menu" class="hidden absolute right-0 mt-1 bg-white rounded-lg shadow-lg border border-slate-200 z-50 min-w-[180px]">
+                        <button onclick="exportData('json')" class="w-full text-left px-4 py-2 text-xs hover:bg-slate-50 rounded-t-lg">
+                            <i class="fa-solid fa-file-code mr-2 text-blue-600"></i>JSON形式
+                        </button>
+                        <button onclick="exportData('csv')" class="w-full text-left px-4 py-2 text-xs hover:bg-slate-50 rounded-b-lg">
+                            <i class="fa-solid fa-file-csv mr-2 text-green-600"></i>CSV形式
+                        </button>
+                    </div>
+                    </div>
+                <button onclick="document.getElementById('import_file').click()" class="px-3 py-1.5 text-xs font-bold rounded-md bg-blue-100 text-blue-700 hover:bg-blue-200 transition-colors">
+                    <i class="fa-solid fa-upload mr-1"></i>インポート
+                </button>
+                <button id="safe_import_btn_visible" onclick="openSafeImportModal()" class="ml-2 px-3 py-1.5 text-xs font-bold rounded-md bg-indigo-100 text-indigo-700 hover:bg-indigo-200 transition-colors">
+                    <i class="fa-solid fa-shield-halved mr-1"></i>安全インポート
+                </button>
+                <input type="file" id="import_file" accept=".json,.csv" style="display:none" onchange="importData(event)">
+            </div>
+            <div class="bg-white p-1 rounded-lg border border-slate-200 shadow-sm inline-flex">
+                <button class="px-4 py-1.5 text-xs font-bold rounded-md transition-colors bg-slate-100 text-slate-800 shadow-sm" id="btn_league_cl" onclick="setLeague('Central')">セ・リーグ</button>
+                <button class="px-4 py-1.5 text-xs font-bold rounded-md transition-colors text-slate-400 hover:text-slate-600" id="btn_league_pl" onclick="setLeague('Pacific')">パ・リーグ</button>
+            </div>
+        </div>
+        
+        <div id="export_modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4" onclick="if(event.target.id === 'export_modal') hideExportModal()">
+            <div class="bg-white rounded-xl p-4 max-w-md w-full shadow-xl" style="margin-top:6vh;" onclick="event.stopPropagation()">
+                <div class="flex justify-between items-center mb-3">
+                    <h3 class="text-lg font-bold">エクスポート</h3>
+                    <button class="text-sm text-slate-500" onclick="hideExportModal()">閉じる</button>
+                </div>
+                <div class="grid gap-3">
+                    <div class="p-3 rounded hover:bg-slate-50 cursor-pointer" onclick="exportData('json'); hideExportModal();">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-3">
+                                <i class="fa-solid fa-file-code text-blue-600"></i>
+                                <div>
+                                    <div class="font-bold">JSONとしてダウンロード</div>
+                                    <div class="text-xs text-slate-500">プロファイルをファイル(JSON)としてローカルに保存します。</div>
+                                </div>
+                            </div>
+                            <div class="text-xs text-slate-400" style="min-width:90px; text-align:right;">ローカル保存</div>
+                        </div>
+                    </div>
+                    <div class="p-3 rounded hover:bg-slate-50 cursor-pointer" onclick="exportData('csv'); hideExportModal();">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-3">
+                                <i class="fa-solid fa-file-csv text-green-600"></i>
+                                <div>
+                                    <div class="font-bold">CSVとしてダウンロード</div>
+                                    <div class="text-xs text-slate-500">表形式で出力します。スプレッドシートで開いて編集可能です。</div>
+                                </div>
+                            </div>
+                            <div class="text-xs text-slate-400" style="min-width:90px; text-align:right;">ローカル保存</div>
+                        </div>
+                    </div>
+                    <div class="p-3 rounded hover:bg-slate-50 cursor-pointer" onclick="copyCurrentProfileToClipboard();">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-3">
+                                <i class="fa-solid fa-clipboard text-indigo-600"></i>
+                                <div>
+                                    <div class="font-bold">クリップボードにコピー</div>
+                                    <div class="text-xs text-slate-500">現在の設定をJSON形式でクリップボードへコピーします。</div>
+                                </div>
+                            </div>
+                            <div class="text-xs text-slate-400" style="min-width:90px; text-align:right;">クリップボード</div>
+                        </div>
+                    </div>
+                </div>
+                </div>
+        </div>
+
+        <div id="safe_import_modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4" onclick="if(event.target.id === 'safe_import_modal') closeSafeImportModal()">
+            <div class="bg-white rounded-xl p-4 max-w-2xl w-full shadow-xl" style="margin-top:6vh;" onclick="event.stopPropagation()">
+                <div class="flex justify-between items-center mb-3">
+                    <h3 class="text-lg font-bold">安全インポート</h3>
+                    <button class="text-sm text-slate-500" onclick="closeSafeImportModal()">閉じる</button>
+                </div>
+                <div class="grid gap-3">
+                    <p class="text-sm text-slate-600">ファイル（JSON/CSV）をアップロードして、プレビューを確認後に明示的に適用してください。既存データは上書きされます。</p>
+                    <div class="flex gap-2 items-center">
+                        <input id="safe_import_file" type="file" accept=".json,.csv" class="" onchange="safeImportFileChanged(event)">
+                        <button class="px-3 py-1 bg-indigo-600 text-white rounded" onclick="openSafeImportFromTextArea()">テキスト貼り付けで開く</button>
+                    </div>
+                    <textarea id="safe_import_text" class="w-full h-28 p-2 border rounded text-sm" placeholder="ここにJSONまたはCSVを貼り付けてプレビューを表示できます"></textarea>
+                    <div class="flex gap-2">
+                        <button class="px-3 py-1 bg-gray-200 rounded" onclick="previewSafeImport()">プレビュー</button>
+                        <button id="safe_import_apply_btn" class="px-3 py-1 bg-green-600 text-white rounded" onclick="applySafeImport()" disabled>適用（上書き）</button>
+                    </div>
+                    <div id="safe_import_preview" class="max-h-60 overflow-auto border rounded p-2 bg-white"></div>
+                </div>
+            </div>
+        </div>
+
+        <div id="smart_input_modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4" onclick="if(event.target.id === 'smart_input_modal') closeSmartInputModal()">
+            <div class="bg-white rounded-xl p-5 max-w-lg w-full shadow-xl" onclick="event.stopPropagation()">
+                <div class="flex justify-between items-center mb-3">
+                    <h3 class="text-lg font-bold text-slate-800"><i class="fa-solid fa-wand-magic-sparkles text-blue-500 mr-2"></i>成績テキスト読込</h3>
+                    <button class="text-sm text-slate-500 hover:text-slate-700" onclick="closeSmartInputModal()">閉じる</button>
+                </div>
+                <p class="text-xs text-slate-500 mb-2">Webサイト等の成績をコピーして貼り付けてください。<br>「20本」「打率.300」「150安打」のようなキーワードから数値を自動抽出します。</p>
+                
+                <textarea id="smart_input_text" class="w-full h-32 p-3 border rounded-lg text-sm mb-4 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none" placeholder="例:&#13;&#10;打率.310 試合140 打数500 安打155 本塁打30 打点90..."></textarea>
+                
+                <div class="flex justify-end gap-2">
+                    <button onclick="closeSmartInputModal()" class="px-4 py-2 text-sm font-bold text-slate-600 hover:bg-slate-100 rounded-lg">キャンセル</button>
+                    <button onclick="applySmartInput()" class="px-4 py-2 text-sm font-bold bg-blue-600 text-white hover:bg-blue-700 rounded-lg">解析して反映</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="history_modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4" onclick="if(event.target.id === 'history_modal') hideHistoryModal()">
+            <div class="bg-white rounded-xl p-4 max-w-lg w-full shadow-xl" onclick="event.stopPropagation()">
+                <div class="flex justify-between items-center mb-3">
+                    <h3 class="text-lg font-bold">保存履歴</h3>
+                    <button class="text-sm text-slate-500" onclick="hideHistoryModal()">閉じる</button>
+                </div>
+                <div id="history_list" class="max-h-80 overflow-auto border rounded"></div>
+            </div>
+        </div>
+
+        <div id="test_modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4" onclick="if(event.target.id === 'test_modal') hideTestModal()">
+            <div class="bg-white rounded-xl p-4 max-w-lg w-full shadow-xl" onclick="event.stopPropagation()">
+                <div class="flex justify-between items-center mb-3">
+                    <h3 class="text-lg font-bold">自動テスト結果</h3>
+                    <button class="text-sm text-slate-500" onclick="hideTestModal()">閉じる</button>
+                </div>
+                <div id="test_results" class="max-h-80 overflow-auto border rounded p-2 text-sm"></div>
+            </div>
+        </div>
+
+        <div id="error_alert" class="hidden fixed top-4 right-4 z-50 max-w-md">
+            <div class="bg-red-50 border-l-4 border-red-500 p-4 rounded-lg shadow-lg">
+                <div class="flex items-start">
+                    <i class="fa-solid fa-triangle-exclamation text-red-500 mr-3 mt-0.5"></i>
+                    <div class="flex-1">
+                        <h4 class="text-sm font-bold text-red-800 mb-1">入力エラー</h4>
+                        <p class="text-sm text-red-700" id="error_message"></p>
+                    </div>
+                    <button onclick="hideError()" class="text-red-500 hover:text-red-700 ml-2">
+                        <i class="fa-solid fa-times"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div id="save_profile_modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4" onclick="if(event.target.id === 'save_profile_modal') hideSaveProfileModal()">
+            <div class="bg-white rounded-xl p-6 max-w-md w-full shadow-xl" onclick="event.stopPropagation()">
+                <h3 class="text-lg font-bold text-slate-800 mb-4">プロファイルを保存</h3>
+                <input type="text" id="profile_name_input" placeholder="プロファイル名を入力" class="input-field mb-4" maxlength="30" onkeydown="if(event.key === 'Enter') saveProfile(); if(event.key === 'Escape') hideSaveProfileModal();">
+                <div class="mb-4 text-sm">
+                    <label class="input-label">保存範囲</label>
+                    <div class="flex gap-3 items-center">
+                        <label class="text-xs"><input type="radio" name="save_scope" value="all" checked> 全体</label>
+                        <label class="text-xs"><input type="radio" name="save_scope" value="batter"> 打撃のみ</label>
+                        <label class="text-xs"><input type="radio" name="save_scope" value="pitcher"> 投手のみ</label>
+                    </div>
+                </div>
+                <div class="flex gap-2 justify-end">
+                    <button onclick="hideSaveProfileModal()" class="px-4 py-2 text-sm font-bold text-slate-600 hover:bg-slate-100 rounded-lg transition">キャンセル</button>
+                    <button onclick="saveProfile()" class="px-4 py-2 text-sm font-bold bg-blue-600 text-white hover:bg-blue-700 rounded-lg transition">保存</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="batter-section" class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            <div id="print-left" class="lg:col-span-4 space-y-4">
+                <div class="glass-panel p-6">
+                    <div class="flex justify-between items-center mb-4 border-l-4 border-blue-500 pl-3">
+                        <h2 class="text-sm font-bold text-slate-700 uppercase">成績入力</h2>
+                        <div class="flex gap-2">
+                            <button onclick="openSmartInputModal('batter')" class="text-xs px-2 py-1 bg-slate-100 text-slate-600 rounded hover:bg-slate-200 transition">
+                                <i class="fa-solid fa-wand-magic-sparkles mr-1"></i>テキスト読込
+                            </button>
+                            <button onclick="togglePanel('batter_inputs_area', this)" class="w-6 h-6 flex items-center justify-center bg-slate-100 text-slate-500 rounded hover:bg-slate-200 transition">
+                                <i class="fa-solid fa-chevron-up text-xs"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div id="batter_inputs_area" class="transition-all duration-300">
+                        <div class="mb-4 bg-slate-50 p-3 rounded border border-slate-200 flex flex-wrap items-center gap-3">
+                            <label class="text-xs font-bold text-slate-500"><i class="fa-solid fa-location-dot mr-1"></i>球場補正 (PF)</label>
+                            <select id="stadium_select" class="text-xs border rounded p-1" onchange="applyStadiumPf()">
+                                <option value="1.00">平均的な球場 (1.00)</option>
+                                <option value="1.15">東京ドーム (1.15)</option>
+                                <option value="1.25">神宮球場 (1.25)</option>
+                                <option value="1.10">横浜スタジアム (1.10)</option>
+                                <option value="0.85">バンテリンドーム (0.85)</option>
+                                <option value="0.90">甲子園球場 (0.90)</option>
+                                <option value="0.95">マツダスタジアム (0.95)</option>
+                                <option value="1.05">PayPayドーム (1.05)</option>
+                                <option value="1.00">京セラドーム (1.00)</option>
+                                <option value="1.05">楽天モバイル (1.05)</option>
+                                <option value="1.00">ベルーナドーム (1.00)</option>
+                                <option value="0.95">ZOZOマリン (0.95)</option>
+                                <option value="0.98">エスコンF (0.98)</option>
+                            </select>
+                            <select id="position_select" class="text-xs border rounded p-1" onchange="calcBatter()">
+                                <option value="DH">指名打者 (DH)</option>
+                                <option value="1B">一塁手 (1B)</option>
+                                <option value="2B">二塁手 (2B)</option>
+                                <option value="3B">三塁手 (3B)</option>
+                                <option value="SS">遊撃手 (SS)</option>
+                                <option value="LF">左翼手 (LF)</option>
+                                <option value="CF">中堅手 (CF)</option>
+                                <option value="RF">右翼手 (RF)</option>
+                                <option value="C">捕手 (C)</option>
+                            </select>
+                            <div class="text-[10px] text-slate-400">※ポジション補正を加えてWARを算出します</div>
+                            <div class="flex items-center gap-1">
+                                <span class="text-[10px] text-slate-400">手動値:</span>
+                                <input type="number" id="batter_pf" class="w-16 text-xs border rounded p-1" value="1.00" step="0.01" min="0.5" max="2.0" oninput="calcBatter()">
+                            </div>
+                            <div class="ml-auto text-[10px] text-slate-400">※wRC+等に影響します</div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div class="col-span-2"><label class="input-label">打数 (AB)</label><input type="number" id="b_ab" class="input-field" value="450" min="0" oninput="calcBatter()"></div>
+                            <div><label class="input-label">安打 (H)</label><input type="number" id="b_h" class="input-field" value="135" min="0" oninput="calcBatter()"></div>
+                            <div><label class="input-label">二塁打 (2B)</label><input type="number" id="b_2b" class="input-field" value="25" min="0" oninput="calcBatter()"></div>
+                            <div><label class="input-label">三塁打 (3B)</label><input type="number" id="b_3b" class="input-field" value="2" min="0" oninput="calcBatter()"></div>
+                            <div><label class="input-label">本塁打 (HR)</label><input type="number" id="b_hr" class="input-field" value="20" min="0" oninput="calcBatter()"></div>
+                            <div class="col-span-2 border-t border-slate-100 my-2"></div>
+                            <div><label class="input-label">四球 (BB)</label><input type="number" id="b_bb" class="input-field" value="50" min="0" oninput="calcBatter()"></div>
+                            <div><label class="input-label">敬遠 (IBB)</label><input type="number" id="b_ibb" class="input-field" value="2" min="0" oninput="calcBatter()"></div>
+                            <div><label class="input-label">死球 (HBP)</label><input type="number" id="b_hbp" class="input-field" value="5" min="0" oninput="calcBatter()"></div>
+                            <div><label class="input-label">犠飛 (SF)</label><input type="number" id="b_sf" class="input-field" value="3" min="0" oninput="calcBatter()"></div>
+                            <div><label class="input-label text-blue-600">三振 (K)</label><input type="number" id="b_k" class="input-field border-blue-200 bg-blue-50" value="80" min="0" oninput="calcBatter()"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="print-right" class="lg:col-span-8 space-y-4">
+                
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    <div class="metric-card ring-1 ring-amber-300 bg-amber-50 relative overflow-hidden">
+                        <div class="absolute top-0 right-0 p-1">
+                            <i class="fa-solid fa-crown text-amber-200 text-4xl opacity-50 -rotate-12"></i>
+                        </div>
+                        <div class="metric-title text-amber-600 relative z-10">
+                            WAR <i class="fa-solid fa-circle-info info-icon" data-tippy-content="【Wins Above Replacement】<br>控え選手と比較した勝利貢献数。<br>目安: 2.0以上でレギュラー、5.0以上でMVP級。"></i>
+                        </div>
+                        <div class="metric-value text-amber-700 relative z-10" id="res_war">0.0</div>
+                        <div class="metric-sub text-amber-600/70">総合貢献</div>
+                    </div>
+
+                    <div class="metric-card ring-1 ring-blue-200 bg-blue-50/50">
+                        <div class="metric-title text-blue-600">
+                            OPS <i class="fa-solid fa-circle-info info-icon" data-tippy-content="【On-base Plus Slugging】<br>出塁率 + 長打率。<br>目安: .700平均 / .800優秀"></i>
+                        </div>
+                        <div class="metric-value text-blue-700" id="res_ops">.000</div>
+                        <div class="metric-sub">得点力</div>
+                        <div class="metric-avg" id="avg_ops">平均 .---</div> </div>
+
+                    <div class="metric-card ring-1 ring-green-200 bg-green-50/50">
+                        <div class="metric-title text-green-600">
+                            wOBA <i class="fa-solid fa-circle-info info-icon" data-tippy-content="【weighted On-Base Average】<br>1打席あたりの得点貢献。<br>目安: .320平均 / .370優秀"></i>
+                        </div>
+                        <div class="metric-value text-green-700" id="res_woba">.000</div>
+                        <div class="metric-sub">加重出塁</div>
+                        <div class="metric-avg" id="avg_woba">平均 .---</div> </div>
+
+                    <div class="metric-card ring-1 ring-purple-200 bg-purple-50/50">
+                        <div class="metric-title text-purple-600">
+                            wRAA <i class="fa-solid fa-circle-info info-icon" data-tippy-content="【weighted Runs Above Average】<br>平均的な打者と比べて増やした得点数。<br>目安: 0が平均。+20で優秀。"></i>
+                        </div>
+                        <div class="metric-value text-purple-700" id="res_wraa">0.0</div>
+                        <div class="metric-sub">得点創出</div>
+                        <div class="metric-avg">平均 0.0</div> </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                    
+                    <div class="glass-panel p-5">
+                        <h3 class="text-xs font-bold text-slate-400 uppercase mb-3 border-b pb-2">Basic & Detailed Analysis</h3>
+                        
+                        <div class="grid grid-cols-4 gap-2 text-center mb-4">
+                            <div class="p-1">
+                                <div class="text-[10px] text-slate-500 font-bold">AVG</div>
+                                <div class="text-base font-bold text-slate-700" id="res_avg">.000</div>
+                                <div class="metric-avg" id="avg_avg">平均 .---</div> </div>
+                            <div class="p-1">
+                                <div class="text-[10px] text-slate-500 font-bold">OBP</div>
+                                <div class="text-base font-bold text-slate-700" id="res_obp">.000</div>
+                                <div class="metric-avg" id="avg_obp">平均 .---</div> </div>
+                            <div class="p-1">
+                                <div class="text-[10px] text-slate-500 font-bold">SLG</div>
+                                <div class="text-base font-bold text-slate-700" id="res_slg">.000</div>
+                                <div class="metric-avg" id="avg_slg">平均 .---</div> </div>
+                            <div class="p-1">
+                                <div class="text-[10px] text-slate-500 font-bold">IsoP</div>
+                                <div class="text-base font-bold text-slate-700" id="res_isop">.000</div>
+                                <div class="metric-avg" id="avg_isop">平均 .---</div> </div>
+                        </div>
+
+                        <div class="grid grid-cols-4 gap-2 text-center">
+                            <div class="bg-indigo-50 rounded p-2 flex flex-col justify-center">
+                                <div class="text-[9px] text-indigo-400 font-bold mb-1">RC27</div>
+                                <div class="text-sm font-bold text-indigo-700 leading-none" id="res_rc27">0.00</div>
+                                <div class="text-[9px] text-indigo-400/70 mt-1" id="avg_rc27">平均 0.00</div> </div>
+                            <div class="bg-orange-50 rounded p-2 flex flex-col justify-center">
+                                <div class="text-[9px] text-orange-400 font-bold mb-1">BABIP</div>
+                                <div class="text-sm font-bold text-orange-700 leading-none" id="res_babip">.000</div>
+                                <div class="text-[9px] text-orange-400/70 mt-1" id="avg_babip">平均 .000</div> </div>
+                            <div class="bg-slate-50 rounded p-2 flex flex-col justify-center">
+                                <div class="text-[9px] text-slate-400 font-bold mb-1">IsoD</div>
+                                <div class="text-sm font-bold text-slate-600 leading-none" id="res_isod">.000</div>
+                                <div class="text-[9px] text-slate-400/70 mt-1" id="avg_isod">平均 .000</div> </div>
+                            <div class="bg-slate-50 rounded p-2 flex flex-col justify-center">
+                                <div class="text-[9px] text-slate-400 font-bold mb-1">BB/K</div>
+                                <div class="text-sm font-bold text-slate-600 leading-none" id="res_bbk_bat">0.00</div>
+                                <div class="text-[9px] text-slate-400/70 mt-1" id="avg_bbk">平均 0.00</div> </div>
+                        </div>
+                    </div>
+
+                    <div class="glass-panel p-5 relative overflow-hidden">
+                        <div class="flex justify-between items-center mb-3 border-b pb-2">
+                            <h3 class="text-xs font-bold text-slate-400 uppercase">Advanced Metrics & Type</h3>
+                            <div id="player_types" class="flex gap-1"></div>
+                        </div>
+                        
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="text-center w-1/2 border-r border-slate-100 pr-4">
+                                <div class="text-xs font-bold text-cyan-600 mb-1">
+                                    wRC+ <i class="fa-solid fa-circle-info info-icon" data-tippy-content="【Weighted Runs Created Plus】<br>得点創出力の傑出度。<br>100が平均。球場補正を含む。"></i>
+                                </div>
+                                <div class="text-4xl font-black text-cyan-600 tracking-tighter" id="res_wrc_plus">100</div>
+                                <div class="text-[10px] text-slate-400 mt-1">リーグ平均=100</div>
+                            </div>
+                            <div class="w-1/2 pl-4 space-y-3">
+                                <div class="flex justify-between items-center">
+                                    <span class="text-xs font-bold text-pink-500">K%</span>
+                                    <span class="text-sm font-bold text-slate-700" id="res_k_pct">0.0%</span>
+                                </div>
+                                <div class="w-full bg-slate-100 rounded-full h-1.5"><div id="bar_k_pct" class="bg-pink-400 h-1.5 rounded-full transition-all duration-500" style="width: 0%"></div></div>
+                                
+                                <div class="flex justify-between items-center">
+                                    <span class="text-xs font-bold text-emerald-500">BB%</span>
+                                    <span class="text-sm font-bold text-slate-700" id="res_bb_pct">0.0%</span>
+                                </div>
+                                <div class="w-full bg-slate-100 rounded-full h-1.5"><div id="bar_bb_pct" class="bg-emerald-400 h-1.5 rounded-full transition-all duration-500" style="width: 0%"></div></div>
+
+                                <div class="flex justify-between items-center">
+                                    <span class="text-xs font-bold text-amber-500">HR%</span>
+                                    <span class="text-sm font-bold text-slate-700" id="res_hr_pct">0.0%</span>
+                                </div>
+                                <div class="w-full bg-slate-100 rounded-full h-1.5"><div id="bar_hr_pct" class="bg-amber-400 h-1.5 rounded-full transition-all duration-500" style="width: 0%"></div></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="pitcher-section" class="hidden grid grid-cols-1 lg:grid-cols-12 gap-6">
+            <div class="lg:col-span-4 glass-panel p-6">
+                <div class="flex justify-between items-center mb-4 border-l-4 border-red-500 pl-3">
+                    <h2 class="text-sm font-bold text-slate-700 uppercase">投手成績入力</h2>
+                    <div class="flex gap-2">
+                        <button onclick="openSmartInputModal('pitcher')" class="text-xs px-2 py-1 bg-slate-100 text-slate-600 rounded hover:bg-slate-200 transition">
+                            <i class="fa-solid fa-wand-magic-sparkles mr-1"></i>テキスト読込
+                        </button>
+                        <button onclick="togglePanel('pitcher_inputs_area', this)" class="w-6 h-6 flex items-center justify-center bg-slate-100 text-slate-500 rounded hover:bg-slate-200 transition">
+                            <i class="fa-solid fa-chevron-up text-xs"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <div id="pitcher_inputs_area" class="transition-all duration-300">
+                    <div class="grid grid-cols-2 gap-3">
+                        <div class="col-span-2"><label class="input-label">投球回 (IP)</label><input type="number" id="p_ip" class="input-field" value="160.0" step="0.1" min="0" oninput="calcPitcher()"><p class="text-[10px] text-right text-slate-400">.1=1/3, .2=2/3</p></div>
+                        <div><label class="input-label">自責点</label><input type="number" id="p_er" class="input-field" value="50" min="0" oninput="calcPitcher()"></div>
+                        <div><label class="input-label">失点</label><input type="number" id="p_r" class="input-field" value="55" min="0" oninput="calcPitcher()"></div>
+                        <div><label class="input-label">勝利 (W)</label><input type="number" id="p_w" class="input-field" value="10" min="0" oninput="calcPitcher()"></div>
+                        <div><label class="input-label">被安打</label><input type="number" id="p_h" class="input-field" value="140" min="0" oninput="calcPitcher()"></div>
+                        <div><label class="input-label">被本塁打</label><input type="number" id="p_hr" class="input-field" value="15" min="0" oninput="calcPitcher()"></div>
+                        <div><label class="input-label">与四球</label><input type="number" id="p_bb" class="input-field" value="40" min="0" oninput="calcPitcher()"></div>
+                        <div><label class="input-label">敬遠</label><input type="number" id="p_ibb" class="input-field" value="2" min="0" oninput="calcPitcher()"></div>
+                        <div><label class="input-label">死球</label><input type="number" id="p_hbp" class="input-field" value="5" min="0" oninput="calcPitcher()"></div>
+                        <div><label class="input-label">奪三振</label><input type="number" id="p_k" class="input-field" value="150" min="0" oninput="calcPitcher()"></div>
+                        <div class="col-span-2 mt-2 border-t pt-2"><label class="input-label text-yellow-600">FIP定数</label><input type="number" id="p_const" class="input-field bg-yellow-50 border-yellow-200" value="3.00" step="0.01" oninput="calcPitcher()"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="lg:col-span-8 space-y-4">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="metric-card ring-1 ring-red-100 bg-red-50/30">
+                        <div class="metric-title text-red-600">FIP <i class="fa-solid fa-circle-info info-icon" data-tippy-content="【守備無関係防御率】<br>純粋な能力値。<br>目安: 3.50平均 / 3.00優秀 / 2.50超一流"></i></div>
+                        <div class="metric-value text-red-700" id="res_fip">0.00</div><div class="metric-sub">実力値</div>
+                        <div class="metric-avg" id="avg_fip">平均 3.40</div>
+                    </div>
+                    <div class="metric-card ring-1 ring-slate-200">
+                        <div class="metric-title">ERA <i class="fa-solid fa-circle-info info-icon" data-tippy-content="【防御率】<br>(自責点×9)÷投球回。<br>目安: 3.50平均 / 3.00優秀 / 2.00超一流"></i></div>
+                        <div class="metric-value text-slate-600" id="res_era">0.00</div><div class="metric-sub">結果指標</div>
+                        <div class="metric-avg" id="avg_era">平均 3.30</div>
+                    </div>
+                    <div class="metric-card ring-1 ring-orange-100 bg-orange-50/30">
+                        <div class="metric-title text-orange-600">LOB% <i class="fa-solid fa-circle-info info-icon" data-tippy-content="【残塁率】<br>出したランナーを還さなかった割合。<br>目安: 72%前後が平均。"></i></div>
+                        <div class="metric-value text-orange-700" id="res_lob">00.0%</div><div class="metric-sub">粘り/運</div>
+                        <div class="metric-avg">平均 74%</div>
+                    </div>
+                </div>
+                <div class="glass-panel p-6">
+                    <h3 class="text-xs font-bold text-slate-500 uppercase">Luck & Defense Analysis</h3>
+                    <div class="flex justify-between items-center mb-4"><div id="diff_badge" class="px-3 py-1 rounded-full text-[10px] font-bold bg-slate-100 text-slate-500">NEUTRAL</div></div>
+                    <div class="flex items-center gap-4 relative h-10 mt-4">
+                        <div class="absolute w-full h-2 bg-slate-100 rounded-full"></div>
+                        <div class="absolute w-1 h-4 bg-slate-400 left-1/2 -translate-x-1/2 top-[-4px] z-10"></div>
+                        <div id="diff_bar" class="absolute h-2 bg-slate-400 rounded-full transition-all duration-500" style="left: 50%; width: 0%;"></div>
+                        <div class="absolute left-0 text-[10px] font-bold text-blue-400 top-4">LUCKY</div>
+                        <div class="absolute right-0 text-[10px] font-bold text-red-400 top-4">UNLUCKY</div>
+                    </div>
+                </div>
+                <div class="glass-panel p-4">
+                    <div class="grid grid-cols-5 gap-2 text-center">
+                        <div class="bg-slate-50 p-2 rounded"><div>K/9 <i class="fa-solid fa-circle-info info-icon" data-tippy-content="【奪三振率】<br>目安: 7.0平均 / 9.0優秀"></i></div><div class="font-bold" id="res_k9">0.00</div><div class="metric-avg text-[10px] mt-1" id="avg_k9">平均 7.00</div></div>
+                        <div class="bg-slate-50 p-2 rounded"><div>BB/9 <i class="fa-solid fa-circle-info info-icon" data-tippy-content="【与四球率】<br>目安: 3.0平均 / 2.0優秀"></i></div><div class="font-bold" id="res_bb9">0.00</div><div class="metric-avg text-[10px] mt-1" id="avg_bb9">平均 3.00</div></div>
+                        <div class="bg-slate-50 p-2 rounded"><div>HR/9 <i class="fa-solid fa-circle-info info-icon" data-tippy-content="【被本塁打率】<br>目安: 0.8平均 / 0.5優秀"></i></div><div class="font-bold" id="res_hr9">0.00</div><div class="metric-avg text-[10px] mt-1" id="avg_hr9">平均 0.80</div></div>
+                        <div class="bg-slate-50 p-2 rounded"><div>WHIP <i class="fa-solid fa-circle-info info-icon" data-tippy-content="【1イニングあたり許走者】<br>目安: 1.30平均 / 1.10優秀"></i></div><div class="font-bold" id="res_whip">0.00</div><div class="metric-avg text-[10px] mt-1" id="avg_whip">平均 1.25</div></div>
+                        <div class="bg-orange-50 p-2 rounded border border-orange-100 text-orange-700"><div>BABIP <i class="fa-solid fa-circle-info info-icon" data-tippy-content="【インプレー被安打率】<br>目安: .300前後"></i></div><div class="font-bold" id="res_p_babip">.000</div><div class="metric-avg text-[10px] mt-1">平均 .290</div></div>
+                    </div>
+                </div>
+
+                <div class="glass-panel p-6">
+                    <div class="flex justify-between items-center mb-4 border-b pb-2">
+                        <h3 class="text-xs font-bold text-slate-400 uppercase">Advanced Metrics & Type</h3>
+                        <div id="pitcher_types" class="flex gap-1"></div>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+                        <div>
+                            <div class="metric-title text-violet-600">SIERA <i class="fa-solid fa-circle-info info-icon" data-tippy-content="【Skill-Interactive ERA】<br>FIPより正確な実力指標。BABIPの影響を考慮。<br><br>【計算式】<br>複雑な式で計算（K/9、BB/9、GB%を考慮）<br><br>【目安】<br>3.00以下: 超一流<br>3.50前後: 平均<br>4.00以上: 課題"></i></div>
+                            <div class="text-xl font-bold text-violet-700" id="res_siera">0.00</div>
+                            <div class="metric-avg" id="avg_siera">平均 3.50</div>
+                        </div>
+                        <div>
+                            <div class="metric-title text-teal-600">xFIP <i class="fa-solid fa-circle-info info-icon" data-tippy-content="【Expected FIP】<br>HR/FB率を平均値に調整したFIP。<br><br>【計算式】<br>FIPのHR部分をリーグ平均HR/FBで調整<br><br>【目安】<br>FIPと同様"></i></div>
+                            <div class="text-xl font-bold text-teal-700" id="res_xfip">0.00</div>
+                            <div class="metric-avg" id="avg_xfip">平均 3.40</div>
+                        </div>
+                        <div>
+                            <div class="metric-title text-indigo-600">K/BB <i class="fa-solid fa-circle-info info-icon" data-tippy-content="【奪三振/与四球比】<br>制球力と奪三振力のバランス。<br><br>【計算式】<br>奪三振 ÷ 与四球<br><br>【目安】<br>4.0以上: 優秀<br>2.5前後: 平均<br>1.5以下: 課題"></i></div>
+                            <div class="text-xl font-bold text-indigo-700" id="res_kbb">0.00</div>
+                            <div class="metric-avg" id="avg_kbb">平均 2.50</div>
+                        </div>
+                        <div>
+                            <div class="metric-title text-rose-600">K% <i class="fa-solid fa-circle-info info-icon" data-tippy-content="【奪三振率】<br>対戦打者に対する奪三振の割合。<br><br>【計算式】<br>奪三振 ÷ (打者数) × 100<br><br>【目安】<br>25%以上: 優秀<br>20%前後: 平均<br>15%以下: 課題"></i></div>
+                            <div class="text-xl font-bold text-rose-700" id="res_p_k_pct">0.0%</div>
+                            <div class="metric-avg" id="avg_p_k_pct">平均 20%</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="team-section" class="hidden glass-panel p-8 max-w-5xl mx-auto">
+            <h2 class="text-center text-xl font-bold mb-6">チーム分析</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div>
+                    <div class="grid grid-cols-2 gap-4 mb-4">
+                        <div class="input-group"><label class="input-label">総得点 (RS)</label><input type="number" id="t_rs" class="input-field" value="555" min="0" oninput="calcTeam()"></div>
+                        <div class="input-group"><label class="input-label">総失点 (RA)</label><input type="number" id="t_ra" class="input-field" value="424" min="0" oninput="calcTeam()"></div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4 border-t pt-4">
+                        <div class="input-group"><label class="input-label">勝 (W)</label><input type="number" id="t_win" class="input-field" value="85" min="0" oninput="calcTeam()"></div>
+                        <div class="input-group"><label class="input-label">敗 (L)</label><input type="number" id="t_loss" class="input-field" value="53" min="0" oninput="calcTeam()"></div>
+                    </div>
+                    <div class="mt-4 p-4 bg-slate-50 rounded border text-xs text-slate-500">
+                        <p><strong>Memo:</strong> 得失点と実際の勝敗を入力すると、運の要素やチームの実力が分かります。</p>
+                    </div>
+                </div>
+                
+                <div class="space-y-4">
+                    <div class="bg-indigo-50 rounded-xl p-4 text-center">
+                        <p class="text-[10px] font-bold text-indigo-400 uppercase">Pythagorean Win % <i class="fa-solid fa-circle-info info-icon" data-tippy-content="【ピタゴラス勝率】<br>得点と失点の関係から算出される『期待勝率』。<br>実際の勝率より、チームの真の実力を表すとされる。"></i></p>
+                        <div class="text-3xl font-black text-indigo-700" id="res_pyth">.000</div>
+                        <div class="text-xs text-indigo-400 mt-1 font-bold">得失点差: <span id="res_rdiff" class="text-lg">0</span></div>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-3">
+                        <div class="bg-white p-3 rounded border text-center">
+                            <div class="text-[10px] text-slate-500 font-bold mb-1">R/G (平均得点)</div>
+                            <div class="font-bold text-lg text-slate-700" id="res_r_g">0.00</div>
+                        </div>
+                        <div class="bg-white p-3 rounded border text-center">
+                            <div class="text-[10px] text-slate-500 font-bold mb-1">RA/G (平均失点)</div>
+                            <div class="font-bold text-lg text-slate-700" id="res_ra_g">0.00</div>
+                        </div>
+                        <div class="bg-white p-3 rounded border text-center col-span-2">
+                             <div class="text-[10px] text-slate-500 font-bold mb-1">得失点差/試合 (Run Diff/G)</div>
+                             <div class="font-bold text-xl text-slate-800" id="res_diff_g">0.00</div>
+                        </div>
+                    </div>
+                    
+                    <div class="p-4 rounded-xl border flex justify-between items-center bg-white shadow-sm" id="luck_card">
+                        <div>
+                            <p class="text-xs font-bold uppercase text-slate-600">LUCK (運)</p>
+                            <p class="text-[10px] text-slate-400">実勝数 - 期待勝数</p>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-2xl font-black text-slate-800" id="res_luck_win">0.0 <span class="text-sm font-normal">勝</span></div>
+                            <p class="text-[10px] font-bold text-slate-500" id="luck_desc">NEUTRAL</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-6 glass-panel p-6">
+                <h3 class="text-sm font-bold text-slate-700 uppercase mb-4 border-l-4 border-emerald-500 pl-3">シーズン最終着地シミュレーション</h3>
+                <div class="grid grid-cols-3 gap-4 text-center">
+                    <div class="bg-slate-50 p-3 rounded">
+                        <p class="text-xs text-slate-500">現在ペース</p>
+                        <p class="text-xl font-bold text-slate-800" id="sim_final_w">--勝 --敗</p>
+                    </div>
+                    <div class="bg-slate-50 p-3 rounded">
+                        <p class="text-xs text-slate-500">残り試合5割</p>
+                        <p class="text-xl font-bold text-emerald-600" id="sim_500_pct">.000</p>
+                    </div>
+                    <div class="bg-slate-50 p-3 rounded">
+                        <p class="text-xs text-slate-500">貯金 / 借金</p>
+                        <p class="text-xl font-bold text-slate-800" id="sim_savings">0</p>
+                    </div>
+                    <div class="col-span-3 text-[10px] text-right text-slate-400 mt-1">※全143試合換算</div>
+                </div>
+            </div>
+
+            <div class="mt-6 glass-panel p-6 border-t-4 border-indigo-500">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-lg font-bold text-slate-700 uppercase">
+                        <i class="fa-solid fa-list-ol mr-2 text-indigo-500"></i>Lineup Optimizer
+                    </h3>
+                    <div class="space-x-2">
+                        <button onclick="optimizeLineup('sabermetrics')" class="px-3 py-1 text-xs font-bold text-white bg-indigo-600 rounded hover:bg-indigo-700 shadow transition">
+                            <i class="fa-solid fa-wand-magic-sparkles mr-1"></i>セイバー理論で並替
+                        </button>
+                        <button onclick="optimizeLineup('obp')" class="px-3 py-1 text-xs font-bold text-slate-600 bg-slate-200 rounded hover:bg-slate-300 transition">
+                            出塁率順
+                        </button>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div class="lg:col-span-2 overflow-x-auto">
+                        <table class="w-full text-sm text-left border-collapse">
+                            <thead class="text-xs text-slate-500 uppercase bg-slate-50 border-b">
+                                <tr>
+                                    <th class="px-3 py-2 w-10">打順</th>
+                                    <th class="px-3 py-2">選手名 (任意)</th>
+                                    <th class="px-3 py-2 w-20 text-center">出塁率</th>
+                                    <th class="px-3 py-2 w-20 text-center">長打率</th>
+                                    <th class="px-3 py-2 w-16 text-center text-slate-400">OPS</th>
+                                    <th class="px-3 py-2 w-10"></th>
+                                </tr>
+                            </thead>
+                            <tbody id="lineup_tbody">
+                                </tbody>
+                        </table>
+                        <div class="mt-2 text-[10px] text-slate-400 text-right">
+                            ※入力すると即座に予想得点が再計算されます
+                        </div>
+                    </div>
+
+                    <div class="space-y-4">
+                        <div class="bg-slate-800 text-white p-5 rounded-xl shadow-lg relative overflow-hidden">
+                            <div class="absolute top-0 right-0 p-4 opacity-10">
+                                <i class="fa-solid fa-baseball-bat-ball text-6xl"></i>
+                            </div>
+                            <div class="text-xs text-slate-400 font-bold uppercase mb-1">Estimated Runs / Game</div>
+                            <div class="text-4xl font-black text-yellow-400 tracking-tight" id="sim_lineup_score">0.00</div>
+                            <div class="text-xs text-slate-400 mt-2">
+                                <span id="sim_lineup_diff" class="font-bold text-green-400">+0.00</span> vs 平均打線
+                            </div>
+                        </div>
+
+                        <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                            <h4 class="text-xs font-bold text-slate-500 mb-3 border-b pb-2">打順のポイント</h4>
+                            <ul class="text-xs space-y-2 text-slate-600" id="lineup_advice">
+                                <li><i class="fa-solid fa-circle-check text-green-500 mr-2"></i>データを入力してください。</li>
+                            </ul>
+                        </div>
+            
+                        <button onclick="clearLineup()" class="w-full py-2 text-xs text-red-400 hover:text-red-600 border border-red-100 hover:bg-red-50 rounded transition">
+                            入力をリセット
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div id="prediction-section" class="hidden grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div class="glass-panel p-6"><h3 class="text-sm font-bold text-slate-700 uppercase border-l-4 border-teal-500 pl-3 mb-4">来季成績予測 (簡易版)</h3><div class="bg-teal-50 rounded-lg p-4 text-center"><div class="text-xs font-bold text-teal-600">打率 / 防御率</div><div class="text-3xl font-bold text-teal-800 my-2"><span id="next_avg">.000</span> / <span id="next_era">0.00</span></div><p class="text-[10px] text-teal-500">BABIP/FIP回帰に基づく</p></div>
+                <div class="grid grid-cols-2 gap-2 mt-4 text-center">
+                    <div class="bg-white p-2 rounded border"><div class="text-[10px] text-slate-400">Current BABIP</div><div class="font-bold" id="curr_babip">.000</div></div>
+                    <div class="bg-white p-2 rounded border"><div class="text-[10px] text-slate-400">Luck Factor</div><div class="font-bold" id="luck_status">--</div></div>
+                </div>
+            </div>
+            <div class="glass-panel p-6">
+                <h3 class="text-sm font-bold text-slate-700 uppercase border-l-4 border-indigo-500 pl-3 mb-4">シーズン終了時予測 (Pace)</h3>
+                <div class="grid grid-cols-2 gap-2 mb-4">
+                    <div class="input-group"><label class="input-label">消化試合</label><input type="number" id="pred_played" class="input-field" value="100" min="0" oninput="calcPrediction()"></div>
+                    <div class="input-group"><label class="input-label">全試合</label><input type="number" id="pred_total" class="input-field" value="143" min="0" oninput="calcPrediction()"></div>
+                </div>
+                
+                <div class="flex mb-3 bg-slate-100 rounded p-1">
+                    <button class="flex-1 py-1 text-xs font-bold rounded bg-white shadow-sm text-indigo-600 transition" id="btn_season_bat" onclick="toggleSeasonMode('batter')">打者</button>
+                    <button class="flex-1 py-1 text-xs font-bold rounded text-slate-400 transition" id="btn_season_pit" onclick="toggleSeasonMode('pitcher')">投手</button>
+                </div>
+
+                <div id="season_res_bat" class="bg-indigo-50 rounded-lg p-3 space-y-2">
+                    <div class="flex justify-between border-b border-indigo-100 pb-1 text-xs"><span class="font-bold text-slate-500">安打</span><span class="font-bold text-indigo-700" id="proj_h">--</span></div>
+                    <div class="flex justify-between border-b border-indigo-100 pb-1 text-xs"><span class="font-bold text-slate-500">本塁打</span><span class="font-bold text-indigo-700" id="proj_hr">--</span></div>
+                    <div class="flex justify-between text-xs"><span class="font-bold text-slate-500">wRAA</span><span class="font-bold text-indigo-700" id="proj_wraa">--</span></div>
+                </div>
+                
+                <div id="season_res_pit" class="hidden bg-indigo-50 rounded-lg p-3 space-y-2">
+                    <div class="flex justify-between border-b border-indigo-100 pb-1 text-xs"><span class="font-bold text-slate-500">勝利数</span><span class="font-bold text-indigo-700" id="proj_win">--</span></div>
+                    <div class="flex justify-between border-b border-indigo-100 pb-1 text-xs"><span class="font-bold text-slate-500">奪三振</span><span class="font-bold text-indigo-700" id="proj_k">--</span></div>
+                    <div class="flex justify-between pt-1"><span class="text-xs font-bold text-slate-600">予測防御率 (加重)</span><span class="text-lg font-bold text-indigo-700" id="proj_final_era">--</span></div>
+                </div>
+            </div>
+            
+            <div class="col-span-1 lg:col-span-2 glass-panel p-6 bg-amber-50/50 border-amber-100">
+                <h3 class="text-sm font-bold text-amber-800 uppercase mb-4 border-l-4 border-amber-500 pl-3">通算記録 到達予測シミュレーション</h3>
+                <div class="grid grid-cols-4 gap-3 mb-4">
+                    <div><label class="input-label">現在年齢</label><input type="number" id="career_age" class="input-field text-xs" value="25" min="18" oninput="calcCareer()"></div>
+                    <div><label class="input-label">通算安打</label><input type="number" id="career_h" class="input-field text-xs" value="500" min="0" oninput="calcCareer()"></div>
+                    <div><label class="input-label">通算勝利</label><input type="number" id="career_w" class="input-field text-xs" value="30" min="0" oninput="calcCareer()"></div>
+                    <div><label class="input-label">今季ペース</label><select id="career_pace_type" class="input-field text-xs" onchange="calcCareer()"><option value="1.0">維持(100%)</option><option value="0.9">微減(90%)</option><option value="0.8">減衰(80%)</option></select></div>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="bg-white p-3 rounded border border-amber-200 text-center">
+                        <p class="text-[10px] text-amber-600 font-bold mb-1">2000本安打達成</p>
+                        <div class="text-xl font-bold text-slate-700" id="pred_2000h">--歳</div>
+                        <p class="text-[10px] text-slate-400">残り <span id="rem_2000h">--</span> 本</p>
+                    </div>
+                    <div class="bg-white p-3 rounded border border-amber-200 text-center">
+                        <p class="text-[10px] text-amber-600 font-bold mb-1">200勝達成</p>
+                        <div class="text-xl font-bold text-slate-700" id="pred_200w">--歳</div>
+                        <p class="text-[10px] text-slate-400">残り <span id="rem_200w">--</span> 勝</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="comparison-section" class="hidden grid grid-cols-1 lg:grid-cols-12 gap-6">
+            <div class="lg:col-span-4 glass-panel p-6">
+                <h2 class="text-sm font-bold text-slate-700 uppercase mb-4 border-l-4 border-purple-500 pl-3">比較モード</h2>
+                <div class="flex bg-slate-100 rounded p-1 mb-4">
+                    <button class="flex-1 py-2 text-xs font-bold rounded bg-white shadow-sm text-purple-600" id="btn_comp_bat" onclick="toggleCompMode('batter')">打者比較</button>
+                    <button class="flex-1 py-2 text-xs font-bold rounded text-slate-400" id="btn_comp_pit" onclick="toggleCompMode('pitcher')">投手比較</button>
+                </div>
+                <button onclick="findSimilarPlayer()" class="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 rounded-lg shadow-md transition">
+                    <i class="fa-solid fa-magnifying-glass mr-2"></i> 類似選手検索
+                </button>
+                <div class="mt-3 text-xs text-slate-600">
+                    <label class="inline-flex items-center mr-3"><input id="sim_sync_with_radar" type="checkbox" class="mr-2" checked>チャート指標を類似度に同期</label>
+                    <div class="mt-2">
+                        <label class="inline-flex items-center mr-3"><input id="sim_include_isop" type="checkbox" class="mr-2">ISO (IsoP) を類似度に含める</label>
+                        <label class="inline-flex items-center mr-3"><input id="sim_include_bbk" type="checkbox" class="mr-2">BB/K (BBK) を類似度に含める</label>
+                        <label class="inline-flex items-center mr-3"><input id="sim_include_bb9" type="checkbox" class="mr-2">BB/9 を類似度に含める（投手）</label>
+                        <label class="inline-flex items-center"><input id="sim_include_whip" type="checkbox" class="mr-2">WHIP を類似度に含める（投手）</label>
+                    </div>
+                </div>
+                <div class="mt-3 p-3 bg-white border rounded text-xs" id="sim_weight_panel">
+                    <div class="font-bold mb-2">指標の重み（0 = 無視, 1 = 標準, 2 = 高重要度）</div>
+                    <div id="weight_sliders" class="space-y-2">
+                        <div class="flex items-center justify-between"><div class="w-32">OPS</div><input id="weight_ops" type="range" min="0" max="2" step="0.1" value="1"><div id="weight_ops_val" class="w-8 text-right">1.0</div></div>
+                        <div class="flex items-center justify-between"><div class="w-32">AVG</div><input id="weight_avg" type="range" min="0" max="2" step="0.1" value="1"><div id="weight_avg_val" class="w-8 text-right">1.0</div></div>
+                        <div class="flex items-center justify-between"><div class="w-32">SLG</div><input id="weight_slg" type="range" min="0" max="2" step="0.1" value="1"><div id="weight_slg_val" class="w-8 text-right">1.0</div></div>
+                        <div class="flex items-center justify-between"><div class="w-32">ISO</div><input id="weight_isop" type="range" min="0" max="2" step="0.1" value="0.8"><div id="weight_isop_val" class="w-8 text-right">0.8</div></div>
+                        <div class="flex items-center justify-between"><div class="w-32">BB/K</div><input id="weight_bbk" type="range" min="0" max="2" step="0.1" value="0.8"><div id="weight_bbk_val" class="w-8 text-right">0.8</div></div>
+                        <div class="border-t mt-2 pt-2"></div>
+                        <div class="flex items-center justify-between"><div class="w-32">ERA</div><input id="weight_era" type="range" min="0" max="2" step="0.1" value="1"><div id="weight_era_val" class="w-8 text-right">1.0</div></div>
+                        <div class="flex items-center justify-between"><div class="w-32">FIP</div><input id="weight_fip" type="range" min="0" max="2" step="0.1" value="1"><div id="weight_fip_val" class="w-8 text-right">1.0</div></div>
+                        <div class="flex items-center justify-between"><div class="w-32">K/9</div><input id="weight_k9" type="range" min="0" max="2" step="0.1" value="1"><div id="weight_k9_val" class="w-8 text-right">1.0</div></div>
+                        <div class="flex items-center justify-between"><div class="w-32">BB/9</div><input id="weight_bb9" type="range" min="0" max="2" step="0.1" value="0.8"><div id="weight_bb9_val" class="w-8 text-right">0.8</div></div>
+                        <div class="flex items-center justify-between"><div class="w-32">WHIP</div><input id="weight_whip" type="range" min="0" max="2" step="0.1" value="0.8"><div id="weight_whip_val" class="w-8 text-right">0.8</div></div>
+                    </div>
+                </div>
+                <div class="mt-6 p-4 bg-purple-50 border border-purple-100 rounded-lg hidden" id="sim_result_card">
+                    <p class="text-[10px] font-bold text-purple-400 uppercase">SIMILAR PLAYERS</p>
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <div class="text-xl font-bold text-purple-800 mt-1" id="sim_name">--</div>
+                            <div class="text-xs text-purple-600" id="sim_team">--</div>
+                            <div class="mt-2 inline-block px-2 py-1 bg-white rounded text-xs font-bold text-slate-500 border border-purple-100" id="sim_type">--</div>
+                        </div>
+                        <div class="text-xs text-slate-400 text-right">類似度: <div id="sim_score" class="font-bold text-lg" data-tippy-content="類似度は選択された指標の正規化距離から計算された0〜100%の一致度です。高いほど似ています。">--%</div></div>
+                    </div>
+                    <div class="mt-3 text-left">
+                        <div class="text-xs text-slate-500 mb-2">上位候補（クリックで選択）</div>
+                        <div id="sim_list_container" class="max-h-40 overflow-auto border rounded bg-white p-2">
+                            <ul id="sim_list" class="space-y-1"></ul>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mt-4 p-4 bg-slate-800 rounded-lg text-center text-white hidden" id="matchup_card">
+                    <p class="text-[10px] font-bold text-purple-300 uppercase mb-2">VS リーグ平均シミュレーション <i class="fa-solid fa-circle-info ml-2 text-sm" data-tippy-content="勝率は選手の指標（打者はOPS、投手はFIP）をリーグ平均と比較し、ロジスティック関数で算出した期待勝率(%)です。状況説明は予想結果のツールチップで確認してください。"></i></p>
+                    <div class="flex justify-around items-center">
+                        <div>
+                            <div class="text-xs text-slate-400">勝率</div>
+                            <div class="text-2xl font-bold text-yellow-400" id="match_win_prob">--%</div>
+                        </div>
+                        <div>
+                            <div class="text-xs text-slate-400">予想結果</div>
+                            <div class="text-sm font-bold" id="match_outcome">--</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="lg:col-span-8 glass-panel p-6 h-[450px]">
+                <h3 class="text-sm font-bold text-slate-700 uppercase mb-4">能力比較レーダーチャート</h3>
+                <div class="relative w-full h-[320px] flex justify-center"><canvas id="radarChart"></canvas></div>
+                <p class="text-[10px] text-center text-slate-400 mt-2" id="chart_avg_label">比較対象: セ・リーグ平均</p>
+            </div>
+        </div>
+
+        <div id="tools-section" class="hidden glass-panel p-8 max-w-4xl mx-auto space-y-8">
+            <div class="border-b pb-8">
+                <h2 class="text-lg font-bold text-slate-700 mb-4 border-l-4 border-yellow-500 pl-3">FIP定数計算</h2>
+                <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div><label class="input-label">Lg ERA</label><input type="number" id="l_era" class="input-field" value="3.50" min="0" oninput="calcConstant()"></div>
+                    <div><label class="input-label">Lg IP</label><input type="number" id="l_ip" class="input-field" value="6000" min="0" oninput="calcConstant()"></div>
+                    <div><label class="input-label">被本塁打</label><input type="number" id="l_hr" class="input-field" value="500" min="0" oninput="calcConstant()"></div>
+                    <div><label class="input-label">与四球</label><input type="number" id="l_bb" class="input-field" value="2000" min="0" oninput="calcConstant()"></div>
+                    <div><label class="input-label">死球</label><input type="number" id="l_hbp" class="input-field" value="300" min="0" oninput="calcConstant()"></div>
+                    <div><label class="input-label">奪三振</label><input type="number" id="l_k" class="input-field" value="4500" min="0" oninput="calcConstant()"></div>
+                    <div class="col-span-2 lg:col-span-2 bg-yellow-50 p-4 rounded text-center flex flex-col justify-center items-center">
+                        <div class="text-xs text-yellow-600 font-bold">FIP Constant</div>
+                        <div class="text-3xl font-black text-yellow-600" id="res_const">3.00</div>
+                        <button onclick="applyConstant()" class="mt-1 bg-yellow-500 hover:bg-yellow-600 text-white text-xs font-bold py-1 px-4 rounded transition">投手に適用</button>
+                    </div>
+                </div>
+            </div>
+
+            <div>
+                <h2 class="text-lg font-bold text-slate-700 mb-4 border-l-4 border-indigo-500 pl-3">指標係数設定 (Weights)</h2>
+                <p class="text-xs text-slate-500 mb-4">wOBAやWARの計算に使用される係数を変更できます。</p>
+                
+                <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+                    <div><label class="input-label">四球 (wBB)</label><input type="number" id="set_wbb" class="input-field" step="0.01"></div>
+                    <div><label class="input-label">死球 (wHBP)</label><input type="number" id="set_whbp" class="input-field" step="0.01"></div>
+                    <div><label class="input-label">単打 (w1B)</label><input type="number" id="set_w1b" class="input-field" step="0.01"></div>
+                    <div><label class="input-label">二塁打 (w2B)</label><input type="number" id="set_w2b" class="input-field" step="0.01"></div>
+                    <div><label class="input-label">三塁打 (w3B)</label><input type="number" id="set_w3b" class="input-field" step="0.01"></div>
+                    <div><label class="input-label">本塁打 (wHR)</label><input type="number" id="set_whr" class="input-field" step="0.01"></div>
+                    <div class="col-span-2">
+                        <label class="input-label text-indigo-600">wOBA Scale</label>
+                        <div class="flex items-center gap-2">
+                            <input type="number" id="set_scale" class="input-field border-indigo-200 bg-indigo-50" step="0.01">
+                            <span class="text-[10px] text-slate-400">※wRAA/wRC+計算用</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="flex justify-between items-center bg-slate-50 p-3 rounded border">
+                    <button onclick="resetSettingsUI()" class="text-xs text-red-500 hover:text-red-700 font-bold">初期値に戻す</button>
+                    <button id="btn_save_weights" onclick="applySettingsFromUI()" class="px-6 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded shadow transition">
+                        保存して再計算
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script type="module" src="js/main.js"></script>
+</body>
+</html>

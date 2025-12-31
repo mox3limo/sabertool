@@ -1,0 +1,688 @@
+:root {
+    --primary-color: #0f172a;
+    --accent-blue: #3b82f6;
+    --accent-red: #ef4444;
+    --bg-color: #f8fafc;
+}
+
+body {
+    font-family: 'Inter', 'Noto Sans JP', sans-serif;
+    background-color: var(--bg-color);
+    color: var(--primary-color);
+    -webkit-font-smoothing: antialiased;
+    padding-bottom: 80px;
+}
+
+.glass-panel {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    border-radius: 12px;
+}
+
+.input-label {
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: #64748b;
+    margin-bottom: 4px;
+    display: block;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+}
+
+.input-field {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    font-size: 0.95rem;
+    color: #1e293b;
+    transition: 0.2s;
+    background: #fff;
+}
+
+.input-field:focus {
+    outline: none;
+    border-color: var(--accent-blue);
+    box-shadow: 0 0 0 2px rgba(191, 219, 254, 0.45);
+}
+
+.input-field.error {
+    border-color: #ef4444;
+    background-color: #fef2f2;
+}
+
+.input-field.error:focus {
+    border-color: #dc2626;
+    box-shadow: 0 0 0 2px rgba(254, 202, 202, 0.45);
+}
+
+.metric-card {
+    background: #fff;
+    border: 1px solid #f1f5f9;
+    border-radius: 10px;
+    padding: 16px;
+    text-align: center;
+    position: relative;
+    transition: all 0.2s;
+}
+
+.metric-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
+}
+
+.metric-title {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #64748b;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 6px;
+}
+
+.metric-value {
+    font-size: 1.75rem;
+    font-weight: 800;
+    color: #0f172a;
+    margin: 4px 0;
+    letter-spacing: -0.5px;
+}
+
+.metric-sub {
+    font-size: 0.7rem;
+    color: #94a3b8;
+}
+
+.metric-avg {
+    font-size: 0.65rem;
+    color: #94a3b8;
+    margin-top: 2px;
+}
+
+.info-icon {
+    color: #94a3b8;
+    cursor: help;
+    font-size: 0.8rem;
+    transition: 0.2s;
+}
+
+.info-icon:hover {
+    color: var(--accent-blue);
+}
+
+.nav-container {
+    display: flex;
+    background: #f1f5f9;
+    border-radius: 12px;
+    padding: 4px;
+    overflow-x: auto;
+    white-space: nowrap;
+    -webkit-overflow-scrolling: touch;
+}
+
+.nav-btn {
+    flex: 1;
+    min-width: 80px;
+    padding: 10px 12px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #64748b;
+    border-radius: 8px;
+    transition: 0.2s;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    text-align: center;
+    white-space: nowrap;
+}
+
+.nav-btn i {
+    font-size: 1rem;
+    margin-bottom: 0;
+}
+
+.nav-btn:hover {
+    color: #1e293b;
+    background: rgba(255, 255, 255, 0.5);
+}
+
+.nav-btn.active {
+    color: var(--accent-blue);
+    background: #ffffff;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+@media (min-width: 768px) {
+    body {
+        padding-bottom: 40px;
+    }
+}
+
+/* Tooltip Custom */
+.tippy-box[data-theme~='custom'] {
+    background-color: #1e293b;
+    color: #fff;
+    font-size: 0.75rem;
+    border-radius: 6px;
+    padding: 10px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    text-align: left;
+    line-height: 1.6;
+}
+
+.tippy-content {
+    white-space: pre-line;
+}
+
+.tippy-arrow {
+    color: #1e293b;
+}
+
+.fade-in {
+    animation: fadeIn 0.3s ease-out forwards;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(5px);
+    }
+
+    to {
+        opacity: 1;
+        transform: 0;
+    }
+}
+
+/* --- Dark Mode Overrides --- */
+body.dark {
+    background-color: #0f172a;
+    /* slate-900 */
+    color: #f1f5f9;
+    /* slate-100 */
+}
+
+/* パネル背景を暗く */
+body.dark .glass-panel {
+    background: #1e293b;
+    /* slate-800 */
+    border-color: #334155;
+    /* slate-700 */
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+}
+
+/* 入力欄 */
+body.dark .input-field {
+    background: #0f172a;
+    border-color: #475569;
+    color: #f8fafc;
+}
+
+body.dark .input-field:focus {
+    border-color: #3b82f6;
+    background: #1e293b;
+}
+
+/* カード類 */
+body.dark .metric-card {
+    background: #1e293b;
+    border-color: #334155;
+}
+
+body.dark .nav-container {
+    background: #1e293b;
+    border: 1px solid #334155;
+}
+
+body.dark .nav-btn {
+    color: #94a3b8;
+}
+
+body.dark .nav-btn:hover {
+    background: rgba(255, 255, 255, 0.05);
+    color: #f8fafc;
+}
+
+body.dark .nav-btn.active {
+    background: #3b82f6;
+    color: #fff;
+}
+
+/* Tailwindの文字色を強制的に明るくする (詳細度を上げて上書き) */
+body.dark .text-slate-500,
+body.dark .text-slate-600,
+body.dark .text-slate-700,
+body.dark .text-slate-800 {
+    color: #cbd5e1 !important;
+    /* slate-300 */
+}
+
+body.dark .text-slate-400 {
+    color: #94a3b8 !important;
+    /* slate-400 */
+}
+
+/* 背景色調整 */
+body.dark .bg-slate-50,
+body.dark .bg-white {
+    background-color: #1e293b !important;
+    /* slate-800 */
+    border-color: #334155 !important;
+}
+
+body.dark .bg-slate-100 {
+    background-color: #334155 !important;
+    /* slate-700 */
+}
+
+/* 「出塁率順」ボタンなどの bg-slate-200 をダークモード用に調整 */
+body.dark .bg-slate-200 {
+    background-color: #334155 !important;
+    /* slate-700 */
+    color: #f1f5f9 !important;
+    /* 白文字 */
+    border: 1px solid #475569;
+    /* 境界線 */
+}
+
+body.dark .hover\:bg-slate-300:hover {
+    background-color: #475569 !important;
+    /* slate-600 */
+}
+
+/* 特定のコンポーネント調整 */
+body.dark header {
+    background-color: #1e293b !important;
+    border-color: #334155 !important;
+}
+
+/* 1. 専用クラスを持たない入力欄(球場選択など)の強制ダーク化 */
+body.dark input,
+body.dark select,
+body.dark textarea {
+    background-color: #0f172a !important;
+    /* slate-900 */
+    border-color: #475569 !important;
+    /* slate-600 */
+    color: #f1f5f9 !important;
+    /* slate-100 */
+}
+
+/* 2. 暗い背景で見にくい濃い文字色を、明るい色に自動置換 (700番台 -> 400番台) */
+body.dark .text-blue-700 {
+    color: #60a5fa !important;
+}
+
+/* blue-400 */
+body.dark .text-green-700 {
+    color: #4ade80 !important;
+}
+
+/* green-400 */
+body.dark .text-purple-700 {
+    color: #c084fc !important;
+}
+
+/* purple-400 */
+body.dark .text-red-700 {
+    color: #f87171 !important;
+}
+
+/* red-400 */
+body.dark .text-orange-700 {
+    color: #fb923c !important;
+}
+
+/* orange-400 */
+body.dark .text-indigo-700 {
+    color: #818cf8 !important;
+}
+
+/* indigo-400 */
+body.dark .text-cyan-700 {
+    color: #22d3ee !important;
+}
+
+/* cyan-400 */
+body.dark .text-pink-700 {
+    color: #f472b6 !important;
+}
+
+/* pink-400 */
+body.dark .text-emerald-700 {
+    color: #34d399 !important;
+}
+
+/* emerald-400 */
+body.dark .text-amber-700 {
+    color: #fbbf24 !important;
+}
+
+/* amber-400 */
+body.dark .text-violet-700 {
+    color: #a78bfa !important;
+}
+
+/* violet-400 */
+body.dark .text-teal-700 {
+    color: #2dd4bf !important;
+}
+
+/* teal-400 */
+body.dark .text-rose-700 {
+    color: #fb7185 !important;
+}
+
+/* rose-400 */
+body.dark .text-yellow-600 {
+    color: #facc15 !important;
+}
+
+/* yellow-400 */
+
+/* 3. タイトル色なども少し明るく調整 (600番台 -> 400番台) */
+body.dark .text-blue-600 {
+    color: #60a5fa !important;
+}
+
+body.dark .text-green-600 {
+    color: #4ade80 !important;
+}
+
+body.dark .text-purple-600 {
+    color: #c084fc !important;
+}
+
+body.dark .text-red-600 {
+    color: #f87171 !important;
+}
+
+body.dark .text-amber-600 {
+    color: #fbbf24 !important;
+}
+
+body.dark .text-indigo-600 {
+    color: #818cf8 !important;
+}
+
+body.dark .text-cyan-600 {
+    color: #22d3ee !important;
+}
+
+/* 4. ラベルや補足テキストの視認性向上 */
+body.dark .input-label,
+body.dark label {
+    color: #cbd5e1 !important;
+    /* slate-300 */
+}
+
+body.dark .text-slate-400 {
+    color: #94a3b8 !important;
+    /* slate-400 (維持) */
+}
+
+/* 5. カードの枠線を目立たなくする */
+body.dark .ring-1 {
+    --tw-ring-opacity: 0.3;
+}
+
+/* --- Detailed Metrics Boxes (Dark Mode) --- */
+
+body.dark .bg-indigo-50 {
+    background-color: rgba(99, 102, 241, 0.15) !important;
+}
+
+body.dark .text-indigo-400,
+body.dark .text-indigo-700 {
+    color: #a5b4fc !important;
+}
+
+body.dark .bg-orange-50 {
+    background-color: rgba(249, 115, 22, 0.15) !important;
+}
+
+body.dark .text-orange-400,
+body.dark .text-orange-700 {
+    color: #fdba74 !important;
+}
+
+body.dark .bg-slate-50 {
+    background-color: #1e293b !important;
+    border: 1px solid #334155;
+}
+
+body.dark .text-slate-600 {
+    color: #e2e8f0 !important;
+}
+
+body.dark .text-indigo-400,
+body.dark .text-orange-400,
+body.dark .text-slate-400 {
+    opacity: 0.8;
+}
+
+/* --- Lineup Optimizer Fixes --- */
+body.dark #lineup_tbody input {
+    color: #ffffff !important;
+    background-color: rgba(0, 0, 0, 0.3) !important;
+    border: 1px solid #475569 !important;
+    border-radius: 4px;
+    padding: 4px 8px !important;
+}
+
+body.dark #lineup_tbody input::placeholder {
+    color: #64748b !important;
+}
+
+body.dark table thead th {
+    background-color: #1e293b !important;
+    color: #94a3b8 !important;
+    border-bottom: 1px solid #334155 !important;
+}
+
+body.dark table tbody tr {
+    border-bottom: 1px solid #1e293b !important;
+}
+
+body.dark table tbody tr:hover {
+    background-color: #1e293b !important;
+}
+
+body.dark table td.text-indigo-900 {
+    color: #a5b4fc !important;
+    background-color: #1e293b !important;
+    border-right: 1px solid #334155 !important;
+}
+
+body.dark .text-yellow-400 {
+    color: #facc15 !important;
+    text-shadow: 0 0 10px rgba(250, 204, 21, 0.2);
+}
+
+body.dark .text-green-400 {
+    color: #4ade80 !important;
+}
+
+body.dark #lineup_advice li {
+    color: #cbd5e1 !important;
+}
+
+/* --- 文字色・ボックスのダークモード調整 (800番台など) --- */
+body.dark .text-teal-800 {
+    color: #5eead4 !important;
+}
+
+body.dark .text-yellow-600,
+body.dark .text-yellow-800 {
+    color: #fde047 !important;
+}
+
+body.dark .text-purple-800 {
+    color: #d8b4fe !important;
+}
+
+body.dark .text-indigo-700,
+body.dark .text-indigo-800 {
+    color: #a5b4fc !important;
+}
+
+body.dark .text-rose-700 {
+    color: #fda4af !important;
+}
+
+body.dark .text-orange-700 {
+    color: #fdba74 !important;
+}
+
+body.dark .text-red-800 {
+    color: #fca5a5 !important;
+}
+
+body.dark .bg-teal-50,
+body.dark .bg-teal-50\/50 {
+    background-color: rgba(20, 184, 166, 0.15) !important;
+    border: 1px solid rgba(20, 184, 166, 0.3);
+}
+
+body.dark .bg-yellow-50,
+body.dark .bg-yellow-50\/50 {
+    background-color: rgba(234, 179, 8, 0.15) !important;
+    border: 1px solid rgba(234, 179, 8, 0.3);
+}
+
+body.dark .bg-purple-50 {
+    background-color: rgba(168, 85, 247, 0.15) !important;
+    border: 1px solid rgba(168, 85, 247, 0.3);
+}
+
+body.dark .bg-indigo-50,
+body.dark .bg-indigo-50\/50 {
+    background-color: rgba(99, 102, 241, 0.15) !important;
+    border: 1px solid rgba(99, 102, 241, 0.3);
+}
+
+body.dark .bg-amber-50,
+body.dark .bg-amber-50\/50 {
+    background-color: rgba(245, 158, 11, 0.15) !important;
+    border-color: rgba(245, 158, 11, 0.3) !important;
+}
+
+body.dark .border-indigo-100 {
+    border-color: rgba(99, 102, 241, 0.3) !important;
+}
+
+body.dark .border-purple-100 {
+    border-color: rgba(168, 85, 247, 0.3) !important;
+}
+
+body.dark .border-amber-100,
+body.dark .border-amber-200 {
+    border-color: rgba(245, 158, 11, 0.3) !important;
+}
+
+body.dark .border-teal-100 {
+    border-color: rgba(20, 184, 166, 0.3) !important;
+}
+
+body.dark .input-group .input-field,
+body.dark #prediction-section input {
+    background-color: rgba(15, 23, 42, 0.6) !important;
+    border: 1px solid #475569 !important;
+    color: #fff !important;
+}
+
+/* --- ★ここから追加：エクスポート・インポート・安全インポートUIのダークモード修正 --- */
+
+/* 1. ヘッダーのボタン群 (色付きボタンの暗色化) */
+body.dark .bg-green-100 {
+    background-color: rgba(34, 197, 94, 0.2) !important;
+    color: #86efac !important;
+    border: 1px solid rgba(34, 197, 94, 0.3);
+}
+
+body.dark .bg-blue-100 {
+    background-color: rgba(59, 130, 246, 0.2) !important;
+    color: #93c5fd !important;
+    border: 1px solid rgba(59, 130, 246, 0.3);
+}
+
+body.dark .bg-indigo-100 {
+    background-color: rgba(99, 102, 241, 0.2) !important;
+    color: #a5b4fc !important;
+    border: 1px solid rgba(99, 102, 241, 0.3);
+}
+
+/* ホバー時の色調整 */
+body.dark .hover\:bg-green-200:hover {
+    background-color: rgba(34, 197, 94, 0.3) !important;
+}
+
+body.dark .hover\:bg-blue-200:hover {
+    background-color: rgba(59, 130, 246, 0.3) !important;
+}
+
+body.dark .hover\:bg-indigo-200:hover {
+    background-color: rgba(99, 102, 241, 0.3) !important;
+}
+
+/* 2. エクスポートメニューのドロップダウン */
+body.dark #export_menu {
+    background-color: #1e293b !important;
+    border-color: #334155 !important;
+}
+
+/* ドロップダウン内のアイテムホバー */
+body.dark #export_menu button:hover {
+    background-color: #334155 !important;
+}
+
+/* 3. モーダル内のリストアイテム（エクスポートモーダルなど） */
+/* hover:bg-slate-50 のダークモード対応 */
+body.dark #export_modal .hover\:bg-slate-50:hover {
+    background-color: #334155 !important;
+}
+
+/* 4. 安全インポートUI */
+/* テキストエリア */
+body.dark #safe_import_text {
+    background-color: #0f172a !important;
+    border-color: #475569 !important;
+    color: #f1f5f9 !important;
+}
+
+/* プレビューエリア */
+body.dark #safe_import_preview {
+    background-color: #0f172a !important;
+    border-color: #475569 !important;
+    color: #f1f5f9 !important;
+}
+
+/* プレビューテーブル */
+body.dark #safe_import_preview th {
+    background-color: #1e293b !important;
+    /* ヘッダー背景 */
+    border-color: #334155 !important;
+    color: #cbd5e1 !important;
+}
+
+body.dark #safe_import_preview td {
+    border-color: #334155 !important;
+    color: #f1f5f9 !important;
+}
+
+/* プレビューテーブルのヘッダー背景色 (bg-gray-50) の上書き */
+body.dark .bg-gray-50 {
+    background-color: #1e293b !important;
+    border-color: #334155 !important;
+}
+
+/* モーダル内のグレーボタン (プレビューなど) */
+body.dark .bg-gray-200 {
+    background-color: #334155 !important;
+    color: #f1f5f9 !important;
+    border: 1px solid #475569;
+}
