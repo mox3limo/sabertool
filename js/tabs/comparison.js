@@ -7,7 +7,6 @@ let currentCompMode = 'batter';
 
 // 初期描画関数
 export function initComparisonChart() {
-    // ★追加: try-catchで囲み、エラー発生時も処理を続行させる
     try {
         const getNum = (id) => { const el = document.getElementById(id); return el ? parseFloat(el.innerText) || 0 : 0; };
         
@@ -18,7 +17,6 @@ export function initComparisonChart() {
             u = { era: getNum('res_era'), fip: getNum('res_fip'), k9: getNum('res_k9'), bb9: getNum('res_bb9'), whip: getNum('res_whip') };
         }
 
-        // ★修正: データ取得を安全に行う（不正値ならCentralを使用）
         const currentLg = (state && typeof state.currentLeague === 'string') ? state.currentLeague : 'Central';
         const lgDB = DB[currentLg] || DB['Central'];
         const lgData = (lgDB && lgDB[currentCompMode==='batter'?'bat':'pit']) || {};
@@ -145,8 +143,22 @@ export function findSimilarPlayer() {
             listEl.innerHTML = '';
             topMatches.forEach((it, idx) => {
                 const li = document.createElement('li');
-                li.className = 'flex items-center justify-between p-1 border-b last:border-b-0';
-                li.innerHTML = `<div><div class="font-bold">${it.player.name}</div><div class="text-xs text-slate-500">${it.player.team || ''}</div></div><div class="flex items-center gap-2"><div class="text-sm font-bold">${it.sim.toFixed(1)}%</div><button onclick="selectSimilar(${idx})" class="text-xs px-2 py-1 rounded bg-indigo-600 text-white">選択</button></div>`;
+                // ★修正: リストのデザイン調整と、Infoボタンの追加
+                li.className = 'flex items-center justify-between p-2 border-b last:border-b-0 hover:bg-slate-50 transition rounded';
+                li.innerHTML = `
+                    <div class="flex-1 cursor-pointer" onclick="openPlayerDetailModal(${idx})">
+                        <div class="font-bold text-slate-700 text-sm">${it.player.name}</div>
+                        <div class="text-xs text-slate-400">${it.player.team || ''}</div>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <div class="text-sm font-bold text-indigo-900">${it.sim.toFixed(1)}%</div>
+                        <button onclick="openPlayerDetailModal(${idx})" class="w-8 h-8 rounded-full flex items-center justify-center text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 transition" title="詳細データを見る">
+                            <i class="fa-solid fa-circle-info text-lg"></i>
+                        </button>
+                        <button onclick="selectSimilar(${idx})" class="text-xs px-3 py-1.5 rounded bg-indigo-600 text-white font-bold hover:bg-indigo-700 shadow-sm transition">
+                            選択
+                        </button>
+                    </div>`;
                 listEl.appendChild(li);
             });
         }
@@ -177,7 +189,6 @@ export function findSimilarPlayer() {
         }
     } catch(e) {
         console.error("Find Similar Failed:", e);
-        // エラーが出てもアラートは出さず、コンソールのみに出力して動作を止めない
     }
 }
 
@@ -205,4 +216,52 @@ export function selectSimilar(idx) {
             drawRadar(u, sel, lgData, mode);
         }
     } catch(e) { console.error(e); }
+}
+
+// ★追加: 詳細モーダルを開く関数
+export function openPlayerDetailModal(idx) {
+    const match = window.lastSimMatches && window.lastSimMatches[idx];
+    if (!match) return;
+    const p = match.player;
+    const mode = window.lastSimMode || currentCompMode;
+
+    document.getElementById('pd_name').innerText = p.name || 'Unknown';
+    document.getElementById('pd_team').innerText = p.team || '所属なし';
+    document.getElementById('pd_type').innerText = p.type || (mode === 'batter' ? '打者' : '投手');
+
+    const container = document.getElementById('pd_stats_container');
+    container.innerHTML = '';
+
+    // データ項目生成ヘルパー
+    const createItem = (label, val, unit='') => `
+        <div class="p-2 bg-white rounded-lg shadow-sm border border-slate-100 flex flex-col items-center justify-center">
+            <div class="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1">${label}</div>
+            <div class="text-xl font-black text-slate-700">${val}<span class="text-xs font-normal text-slate-400 ml-0.5">${unit}</span></div>
+        </div>`;
+
+    let html = '';
+    if (mode === 'batter') {
+        html += createItem('打率', p.avg ? p.avg.toFixed(3).replace(/^0\./, '.') : '---');
+        html += createItem('OPS', p.ops ? p.ops.toFixed(3) : '---');
+        html += createItem('出塁率', p.obp ? p.obp.toFixed(3).replace(/^0\./, '.') : '---');
+        html += createItem('長打率', p.slg ? p.slg.toFixed(3).replace(/^0\./, '.') : '---');
+        html += createItem('BB/K', p.bbk ? p.bbk.toFixed(2) : '---');
+        // 保存データにHRがあれば表示（なければハイフン）
+        html += createItem('本塁打', p.hr !== undefined ? p.hr : '---', '本'); 
+    } else {
+        html += createItem('防御率', p.era ? p.era.toFixed(2) : '---');
+        html += createItem('FIP', p.fip ? p.fip.toFixed(2) : '---');
+        html += createItem('WHIP', p.whip ? p.whip.toFixed(2) : '---');
+        html += createItem('K/9', p.k9 ? p.k9.toFixed(1) : '---');
+        html += createItem('BB/9', p.bb9 ? p.bb9.toFixed(1) : '---');
+        html += createItem('奪三振', p.k !== undefined ? p.k : '---', '個');
+    }
+    container.innerHTML = html;
+
+    const modal = document.getElementById('player_detail_modal');
+    modal.classList.remove('hidden');
+}
+
+export function closePlayerDetailModal() {
+    document.getElementById('player_detail_modal').classList.add('hidden');
 }

@@ -865,5 +865,31 @@
             });
         }
     </script>
+
+    <div id="player_detail_modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4" onclick="if(event.target.id === 'player_detail_modal') closePlayerDetailModal()">
+        <div class="bg-white rounded-xl p-6 max-w-sm w-full shadow-2xl relative transform transition-all scale-100" onclick="event.stopPropagation()">
+            <button onclick="closePlayerDetailModal()" class="absolute top-4 right-4 text-slate-300 hover:text-slate-500 w-8 h-8 flex items-center justify-center rounded-full hover:bg-slate-100 transition">
+                <i class="fa-solid fa-times text-lg"></i>
+            </button>
+                
+            <div class="text-center mb-6">
+                <div class="inline-block p-3 rounded-full bg-indigo-50 text-indigo-500 mb-3 text-2xl shadow-sm">
+                    <i class="fa-solid fa-user-tag"></i>
+                </div>
+                <h3 class="text-xl font-bold text-slate-800 leading-tight" id="pd_name">--</h3>
+                <p class="text-sm text-slate-500 font-medium mt-1" id="pd_team">--</p>
+                <span class="inline-block mt-3 px-3 py-1 bg-slate-100 text-slate-500 text-xs font-bold rounded-full border border-slate-200" id="pd_type">--</span>
+            </div>
+                
+            <div class="bg-slate-50 rounded-xl p-4 border border-slate-100">
+                <div id="pd_stats_container" class="grid grid-cols-2 gap-3 text-center">
+                    </div>
+            </div>
+                
+            <button onclick="closePlayerDetailModal()" class="mt-6 w-full py-3 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm shadow-md transition">
+                閉じる
+            </button>
+        </div>
+    </div>
 </body>
 </html>
