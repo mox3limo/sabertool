@@ -540,37 +540,35 @@ export function setupAutoSave() {
  * フォーマット想定: 選手名, 出塁率, 長打率
  * (ヘッダー行があっても自動判定でスキップします)
  */
+/**
+ * CSVテキストを解析して打順表に反映させる関数 (修正版)
+ * フォーマット想定: 選手名, 出塁率, 長打率
+ */
 export function importLineupCSV(csvText) {
     try {
         const rows = csvText.split(/\r\n|\n/).map(row => row.trim()).filter(row => row);
         if (rows.length === 0) throw new Error('データが空です');
 
-        // 打順表の入力欄を取得
         const tableBody = document.getElementById('lineup_tbody');
         if (!tableBody) throw new Error('打順表が見つかりません。「チーム」タブを開いてから実行してください。');
         
         const trs = tableBody.querySelectorAll('tr');
         
-        // データ行の開始位置を判定 (数値が含まれていない行はヘッダーとみなす)
+        // ヘッダー行スキップ判定
         let startIndex = 0;
         const firstRowCols = rows[0].split(',').map(c => c.trim());
         if (isNaN(parseFloat(firstRowCols[1])) && isNaN(parseFloat(firstRowCols[2]))) {
-            startIndex = 1; // 1行目をスキップ
+            startIndex = 1;
         }
 
         let updateCount = 0;
 
-        // 行ごとに処理
         for (let i = 0; i < trs.length; i++) {
             const csvRow = rows[startIndex + i];
-            if (!csvRow) break; // CSVの行が足りなければ終了
+            if (!csvRow) break;
 
             const cols = csvRow.split(',').map(c => c.trim());
-            const tr = trs[i];
-            
-            // 入力フィールドを探す
-            const inputs = tr.querySelectorAll('input');
-            // 想定: inputs[0]=名前, inputs[1]=出塁率, inputs[2]=長打率
+            const inputs = trs[i].querySelectorAll('input');
             
             if (inputs.length >= 3) {
                 // 名前 (1列目)
@@ -578,22 +576,29 @@ export function importLineupCSV(csvText) {
                 
                 // 出塁率 (2列目)
                 const obp = parseFloat(cols[1]);
-                if (!isNaN(obp)) inputs[1].value = obp;
+                if (!isNaN(obp)) {
+                    inputs[1].value = obp.toFixed(3); // ★修正: 必ず3桁にする (0.3 -> 0.300)
+                    inputs[1].dispatchEvent(new Event('input')); // ★修正: OPS再計算を強制発火
+                }
                 
                 // 長打率 (3列目)
                 const slg = parseFloat(cols[2]);
-                if (!isNaN(slg)) inputs[2].value = slg;
+                if (!isNaN(slg)) {
+                    inputs[2].value = slg.toFixed(3); // ★修正: 必ず3桁にする
+                    inputs[2].dispatchEvent(new Event('input')); // ★修正: OPS再計算を強制発火
+                }
 
                 updateCount++;
             }
         }
 
-        // 計算を実行して反映
+        // 全体の再計算
         if (typeof window.updateLineupData === 'function') {
             window.updateLineupData();
         }
         
-        alert(`${updateCount}人の選手データをインポートしました！`);
+        // 完了メッセージ（邪魔ならコメントアウトしてください）
+        // alert(`${updateCount}人の選手データをインポートしました！`);
 
     } catch (e) {
         console.error(e);
