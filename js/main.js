@@ -6,12 +6,12 @@ import { hideError } from './core/utils.js';
 import { calcBatter, applyStadiumPf } from './tabs/batter.js';
 import { calcPitcher } from './tabs/pitcher.js';
 import { calcTeam, optimizeLineup, clearLineup, moveBatter, updateLineupData, calcLineupScore, runLineupSimulation } from './tabs/team.js';
-import { calcPrediction, calcCareer, toggleSeasonMode } from './tabs/prediction.js';
 
-// ★追加: openPlayerDetailModal, closePlayerDetailModal をインポート
+// ★修正: 新しい関数を含めてインポート
+import { calcPrediction, calcCareer, toggleSeasonMode, selectTopBottom, calcWinProb } from './tabs/prediction.js';
+
 import { toggleCompMode, findSimilarPlayer, selectSimilar, initComparisonChart, openPlayerDetailModal, closePlayerDetailModal } from './tabs/comparison.js';
 
-// ★追加: applySettingsFromUI, resetSettingsUI をインポート（係数設定用）
 import { calcConstant, applyConstant, initTools, applySettingsFromUI, resetSettingsUI } from './tabs/tools.js';
 
 import { openSmartInputModal, closeSmartInputModal, applySmartInput } from './modules/smartInput.js';
@@ -29,6 +29,7 @@ import {
 
 import { exportAsImage } from './modules/export.js';
 
+
 // --- Windowへの登録 ---
 
 // UI & State
@@ -45,7 +46,7 @@ window.applyStadiumPf = applyStadiumPf;
 // Pitcher
 window.calcPitcher = calcPitcher;
 
-// Team (Lineup Simulation含む)
+// Team
 window.calcTeam = calcTeam;
 window.optimizeLineup = optimizeLineup;
 window.clearLineup = clearLineup;
@@ -57,20 +58,23 @@ window.runLineupSimulation = runLineupSimulation;
 window.calcPrediction = calcPrediction;
 window.calcCareer = calcCareer;
 window.toggleSeasonMode = toggleSeasonMode;
+// ★追加: 勝率計算用の関数を登録
+window.selectTopBottom = selectTopBottom;
+window.calcWinProb = calcWinProb;
 
-// Comparison (詳細モーダル含む)
+// Comparison
 window.toggleCompMode = toggleCompMode;
 window.findSimilarPlayer = findSimilarPlayer;
 window.selectSimilar = selectSimilar;
 window.initComparisonChart = initComparisonChart;
-window.openPlayerDetailModal = openPlayerDetailModal; // ★登録
-window.closePlayerDetailModal = closePlayerDetailModal; // ★登録
+window.openPlayerDetailModal = openPlayerDetailModal;
+window.closePlayerDetailModal = closePlayerDetailModal;
 
-// Tools (係数設定含む)
+// Tools
 window.calcConstant = calcConstant;
 window.applyConstant = applyConstant;
-window.applySettingsFromUI = applySettingsFromUI; // ★登録
-window.resetSettingsUI = resetSettingsUI; // ★登録
+window.applySettingsFromUI = applySettingsFromUI;
+window.resetSettingsUI = resetSettingsUI;
 
 // Smart Input
 window.openSmartInputModal = openSmartInputModal;
@@ -98,7 +102,10 @@ window.showHistoryModal = showHistoryModal;
 window.hideHistoryModal = hideHistoryModal;
 window.restoreHistory = restoreHistory;
 window.deleteHistory = deleteHistory;
+
+// Export Image
 window.exportAsImage = exportAsImage;
+
 
 // 初期化処理
 document.addEventListener('DOMContentLoaded', () => {
@@ -112,6 +119,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if(typeof calcTeam === 'function') calcTeam();
     if(typeof calcLineupScore === 'function') calcLineupScore();
 
+    // デフォルトタブ設定
     const batterBtn = document.querySelector('.nav-btn'); 
     if (batterBtn) {
         switchTab('batter', batterBtn);
