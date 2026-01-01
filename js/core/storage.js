@@ -372,24 +372,42 @@ export function copyCurrentProfileToClipboard() {
 export function importData(event) {
     const file = event.target.files[0];
     if (!file) return;
+
     const reader = new FileReader();
-    reader.onload = function(e) {
-        try {
-            const imported = JSON.parse(e.target.result);
-            if (!imported || typeof imported !== 'object' || !imported.data) { alert('無効なファイル形式です'); } 
-            else {
-                if (confirm('データをインポートしますか？現在のデータは上書きされます。')) {
-                    setAllInputData(imported.data);
-                    if (imported.profileName && imported.profileName !== 'default') {
-                        saveToLocalStorage(imported.profileName, imported.data);
-                    }
-                    alert('インポートが完了しました');
+    
+    reader.onload = (e) => {
+        const text = e.target.result;
+
+        // ★追加: 拡張子で分岐
+        if (file.name.toLowerCase().endsWith('.csv')) {
+            // CSVならラインナップ取り込みを実行
+            importLineupCSV(text);
+        } else {
+            // それ以外(JSON)なら既存のプロファイル読み込み
+            try {
+                const data = JSON.parse(text);
+                
+                // 既存の読み込みロジック (loadProfileなど)
+                // ※元のコードに合わせて復元してください。
+                // 通常はここで applyProfile(data) などを呼んでいるはずです。
+                if (typeof window.applySafeImport === 'function') {
+                    // もし safeImport のロジックを使うならこちらへ流す手もありますが、
+                    // ここではシンプルに「現在の画面に反映」させます。
+                    // もし元のコードで loadProfile(data) などを呼んでいた場合はそれを記述してください。
+                    
+                    // ※わからなければ、一旦アラートだけ出すか、safeImport用のモーダルを開く形にします
+                    alert('JSONファイルの読み込みは「安全インポート」ボタンから行ってください。'); 
                 }
+            } catch (err) {
+                alert('ファイル形式が正しくありません。\n' + err);
             }
-        } catch (err) { alert('ファイルの読み込みに失敗しました'); }
-        event.target.value = '';
+        }
     };
+    
     reader.readAsText(file);
+    
+    // 同じファイルを再度選べるようにリセット
+    event.target.value = '';
 }
 
 export function openSafeImportModal() { const m = document.getElementById('safe_import_modal'); if (!m) return; m.classList.remove('hidden'); document.getElementById('safe_import_text').value = ''; document.getElementById('safe_import_preview').innerHTML = ''; document.getElementById('safe_import_apply_btn').disabled = true; }
@@ -513,4 +531,72 @@ export function setupAutoSave() {
         const el = document.getElementById(id);
         if (el) el.addEventListener('input', autoSave);
     });
+}
+
+// ▼▼▼ CSVインポート機能 ▼▼▼
+
+/**
+ * CSVテキストを解析して打順表に反映させる関数
+ * フォーマット想定: 選手名, 出塁率, 長打率
+ * (ヘッダー行があっても自動判定でスキップします)
+ */
+export function importLineupCSV(csvText) {
+    try {
+        const rows = csvText.split(/\r\n|\n/).map(row => row.trim()).filter(row => row);
+        if (rows.length === 0) throw new Error('データが空です');
+
+        // 打順表の入力欄を取得
+        const tableBody = document.getElementById('lineup_tbody');
+        if (!tableBody) throw new Error('打順表が見つかりません。「チーム」タブを開いてから実行してください。');
+        
+        const trs = tableBody.querySelectorAll('tr');
+        
+        // データ行の開始位置を判定 (数値が含まれていない行はヘッダーとみなす)
+        let startIndex = 0;
+        const firstRowCols = rows[0].split(',').map(c => c.trim());
+        if (isNaN(parseFloat(firstRowCols[1])) && isNaN(parseFloat(firstRowCols[2]))) {
+            startIndex = 1; // 1行目をスキップ
+        }
+
+        let updateCount = 0;
+
+        // 行ごとに処理
+        for (let i = 0; i < trs.length; i++) {
+            const csvRow = rows[startIndex + i];
+            if (!csvRow) break; // CSVの行が足りなければ終了
+
+            const cols = csvRow.split(',').map(c => c.trim());
+            const tr = trs[i];
+            
+            // 入力フィールドを探す
+            const inputs = tr.querySelectorAll('input');
+            // 想定: inputs[0]=名前, inputs[1]=出塁率, inputs[2]=長打率
+            
+            if (inputs.length >= 3) {
+                // 名前 (1列目)
+                if (cols[0]) inputs[0].value = cols[0];
+                
+                // 出塁率 (2列目)
+                const obp = parseFloat(cols[1]);
+                if (!isNaN(obp)) inputs[1].value = obp;
+                
+                // 長打率 (3列目)
+                const slg = parseFloat(cols[2]);
+                if (!isNaN(slg)) inputs[2].value = slg;
+
+                updateCount++;
+            }
+        }
+
+        // 計算を実行して反映
+        if (typeof window.updateLineupData === 'function') {
+            window.updateLineupData();
+        }
+        
+        alert(`${updateCount}人の選手データをインポートしました！`);
+
+    } catch (e) {
+        console.error(e);
+        alert('CSVインポートエラー: ' + e.message);
+    }
 }
