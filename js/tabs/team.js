@@ -4,7 +4,7 @@ import { getVal, setTxt, clearAllErrors, setFieldError, showError } from '../cor
 import { TEAM_PRESETS } from '../core/teams_data.js';
 
 // ==========================================
-// チーム分析 (Pythagorean Expectation)
+// 1. チーム分析 (Pythagorean Expectation)
 // ==========================================
 
 export function validateTeamInput() {
@@ -70,9 +70,10 @@ export function calcTeam() {
 }
 
 // ==========================================
-// Lineup Simulator Logic (Drag & Drop)
+// 2. Lineup Simulator Logic (State & Drag-Drop)
 // ==========================================
 
+// 元のコード同様、配列でデータを管理します
 let lineupData = Array(9).fill(null).map((_, i) => ({ 
     name: `打者${i+1}`, obp: 0.310, slg: 0.370 
 }));
@@ -83,7 +84,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (document.getElementById('lineup_tbody')) {
         renderLineupTable();
         calcLineupScore();
-        initLineupSortable(); // ★追加: Sortable初期化
+        initLineupSortable();
     }
 });
 
@@ -93,10 +94,9 @@ function initLineupSortable() {
 
     new Sortable(el, {
         animation: 150,
-        handle: '.drag-handle', // ハンドル部分でのみドラッグ可能にする
-        ghostClass: 'bg-indigo-50', // ドラッグ中のスタイル
+        handle: '.drag-handle',
+        ghostClass: 'bg-indigo-50',
         onEnd: function (evt) {
-            // ドラッグ終了後、見た目の順序に合わせてデータを並べ替える
             const newOrder = [];
             const rows = el.querySelectorAll('tr');
             rows.forEach(row => {
@@ -104,8 +104,6 @@ function initLineupSortable() {
                 newOrder.push(lineupData[index]);
             });
             lineupData = newOrder;
-            
-            // テーブル再描画（番号を振り直すため）と再計算
             renderLineupTable();
             calcLineupScore();
         }
@@ -120,40 +118,64 @@ function renderLineupTable() {
     
     lineupData.forEach((d, i) => {
         const tr = document.createElement('tr');
-        tr.className = "border-b hover:bg-slate-50 transition bg-white";
-        tr.setAttribute('data-index', i); // 元のインデックスを保持
+        tr.className = "border-b border-slate-100 last:border-0 hover:bg-slate-50 transition bg-white group";
+        tr.setAttribute('data-index', i);
         
+        const ops = (d.obp + d.slg).toFixed(3);
+        let opsClass = "text-slate-400";
+        if ((d.obp + d.slg) >= 0.9) opsClass = "text-pink-500";
+        else if ((d.obp + d.slg) >= 0.8) opsClass = "text-orange-500";
+        else if ((d.obp + d.slg) >= 0.7) opsClass = "text-indigo-500";
+
         tr.innerHTML = `
-            <td class="px-3 py-2 font-bold text-indigo-900 text-center bg-indigo-50 border-r border-indigo-100 cursor-move drag-handle select-none">
+            <td class="px-3 py-2 font-bold text-indigo-900 text-center bg-indigo-50 border-r border-indigo-100 cursor-move drag-handle select-none w-10">
                 <i class="fa-solid fa-grip-vertical text-slate-300 mr-2 text-[10px]"></i>${i + 1}
             </td>
-            <td class="px-3 py-2"><input type="text" class="w-full bg-transparent outline-none text-slate-700 placeholder-slate-300" value="${d.name}" placeholder="選手名" onchange="updateLineupData(${i}, 'name', this.value)"></td>
-            <td class="px-3 py-2"><input type="number" step="0.001" class="w-20 text-center border rounded p-1 bg-white focus:border-indigo-500 outline-none" value="${d.obp.toFixed(3)}" oninput="updateLineupData(${i}, 'obp', this.value)"></td>
-            <td class="px-3 py-2"><input type="number" step="0.001" class="w-20 text-center border rounded p-1 bg-white focus:border-indigo-500 outline-none" value="${d.slg.toFixed(3)}" oninput="updateLineupData(${i}, 'slg', this.value)"></td>
-            <td class="px-3 py-2 text-center text-slate-400 font-mono">${(d.obp + d.slg).toFixed(3)}</td>
-            <td class="px-3 py-2 text-center">
-                </td>
+            <td class="px-3 py-2">
+                <input type="text" class="w-full bg-transparent outline-none text-slate-700 placeholder-slate-300 font-bold" 
+                    value="${d.name}" placeholder="選手名" onchange="window.updateLineupData(${i}, 'name', this.value)">
+            </td>
+            <td class="px-3 py-2 w-24">
+                <input type="number" step="0.001" class="w-full text-center border rounded p-1 bg-white focus:border-indigo-500 outline-none font-bold text-indigo-600" 
+                    value="${d.obp.toFixed(3)}" oninput="window.updateLineupData(${i}, 'obp', this.value)">
+            </td>
+            <td class="px-3 py-2 w-24">
+                <input type="number" step="0.001" class="w-full text-center border rounded p-1 bg-white focus:border-indigo-500 outline-none font-bold text-indigo-600" 
+                    value="${d.slg.toFixed(3)}" oninput="window.updateLineupData(${i}, 'slg', this.value)">
+            </td>
+            <td class="px-3 py-2 text-center font-mono font-black ${opsClass} ops-cell">
+                ${ops}
+            </td>
         `;
         tbody.appendChild(tr);
     });
 }
 
+// データの更新 (HTMLから呼ばれる)
 export function updateLineupData(idx, key, val) {
     if (key === 'name') {
         lineupData[idx].name = val;
     } else {
         lineupData[idx][key] = parseFloat(val) || 0;
-        // 入力中はテーブル全体を再描画せず、計算だけ更新する（フォーカス外れ防止）
-        // ただしOPS表示の更新は必要
+        // OPSセルの見た目だけ即時更新
         const rows = document.getElementById('lineup_tbody').querySelectorAll('tr');
         if(rows[idx]) {
-            const opsCell = rows[idx].cells[4];
-            if(opsCell) opsCell.innerText = (lineupData[idx].obp + lineupData[idx].slg).toFixed(3);
+            const opsCell = rows[idx].querySelector('.ops-cell');
+            const ops = lineupData[idx].obp + lineupData[idx].slg;
+            if(opsCell) {
+                opsCell.innerText = ops.toFixed(3);
+                if (ops >= 0.9) opsCell.className = "px-3 py-2 text-center font-mono font-black text-pink-500 ops-cell";
+                else if (ops >= 0.8) opsCell.className = "px-3 py-2 text-center font-mono font-black text-orange-500 ops-cell";
+                else if (ops >= 0.7) opsCell.className = "px-3 py-2 text-center font-mono font-black text-indigo-500 ops-cell";
+                else opsCell.className = "px-3 py-2 text-center font-mono font-black text-slate-400 ops-cell";
+            }
         }
         calcLineupScore();
     }
 }
+window.updateLineupData = updateLineupData; // HTML onclick対応
 
+// ★重要: 予想得点計算ロジック（元のコードを復元）
 export function calcLineupScore() {
     let totalScore = 0;
     const avgScore = 4.0;
@@ -165,58 +187,83 @@ export function calcLineupScore() {
     });
 
     const scoreEl = document.getElementById('sim_lineup_score');
-    const diffEl = document.getElementById('sim_lineup_diff');
+    // 大きな黄色い数字 (estimated_runs または sim_lineup_score)
+    const bigScoreEl = document.getElementById('estimated_runs') || document.querySelector('.text-5xl.font-black.text-yellow-400');
+    
+    // 平均との差 (sim_lineup_diff または score_diff)
+    let diffEl = document.getElementById('sim_lineup_diff');
+    // もしIDがない場合、黄色い数字の下の要素を探す
+    if (!diffEl && bigScoreEl) {
+        diffEl = bigScoreEl.nextElementSibling;
+        if(diffEl) diffEl.id = 'sim_lineup_diff';
+    }
+    
     const adviceEl = document.getElementById('lineup_advice');
     
-    if (scoreEl) {
-        const finalScore = Math.max(0, totalScore - 1.5); 
-        scoreEl.innerText = finalScore.toFixed(2);
+    if (bigScoreEl || scoreEl) {
+        const finalScore = Math.max(0, totalScore - 1.5) * 1.8; // 係数調整
         
-        const diff = finalScore - avgScore;
+        if(scoreEl) scoreEl.innerText = finalScore.toFixed(2);
+        if(bigScoreEl) bigScoreEl.innerText = finalScore.toFixed(2);
+        
+        const diff = finalScore - 3.50; // 平均3.5点と仮定
         if (diffEl) {
             diffEl.innerText = (diff > 0 ? "+" : "") + diff.toFixed(2);
-            diffEl.className = diff > 0 ? "font-bold text-green-400" : "font-bold text-red-400";
+            diffEl.className = diff > 0 ? "text-xs font-bold text-green-400 mt-1" : "text-xs font-bold text-red-400 mt-1";
         }
         
         if (adviceEl) {
             adviceEl.innerHTML = '';
             const no2 = lineupData[1];
-            if (no2.obp < 0.330) {
-                adviceEl.innerHTML += `<li><i class="fa-solid fa-triangle-exclamation text-amber-500 mr-2"></i>2番の出塁率が低めです。現代野球では最強打者を置く傾向があります。</li>`;
-            }
+            if (no2.obp < 0.330) adviceEl.innerHTML += `<li><i class="fa-solid fa-triangle-exclamation text-amber-500 mr-2"></i>2番の出塁率が低めです。</li>`;
             const no4 = lineupData[3];
-            if (no4.slg < 0.400) {
-                adviceEl.innerHTML += `<li><i class="fa-solid fa-circle-info text-blue-400 mr-2"></i>4番の長打力が不足気味です。</li>`;
-            }
+            if (no4.slg < 0.400) adviceEl.innerHTML += `<li><i class="fa-solid fa-circle-info text-blue-400 mr-2"></i>4番の長打力が不足気味です。</li>`;
             const no1 = lineupData[0];
-            if (no1.obp < 0.350) {
-                adviceEl.innerHTML += `<li><i class="fa-solid fa-circle-info text-blue-400 mr-2"></i>1番はとにかく出塁率が高い選手を選びましょう。</li>`;
-            }
+            if (no1.obp < 0.350) adviceEl.innerHTML += `<li><i class="fa-solid fa-circle-info text-blue-400 mr-2"></i>1番は出塁率重視で選びましょう。</li>`;
+            
             if (adviceEl.innerHTML === '') {
                 adviceEl.innerHTML = `<li><i class="fa-solid fa-circle-check text-green-500 mr-2"></i>バランスの良い打順です。</li>`;
             }
         }
     }
 }
+window.calcLineupScore = calcLineupScore;
 
-// 以前の moveBatter 関数は削除しました（ドラッグで代用するため）
-export function moveBatter(idx, dir) {} 
+// ★新機能: プリセット読込（配列データを更新して再描画）
+export function loadTeamPreset(teamKey) {
+    const data = TEAM_PRESETS[teamKey];
+    if (!data) return;
 
+    data.players.forEach((player, index) => {
+        if (index < 9) {
+            lineupData[index].name = player.name;
+            lineupData[index].obp = player.obp;
+            lineupData[index].slg = player.slg;
+        }
+    });
+
+    renderLineupTable();
+    calcLineupScore();
+}
+window.loadTeamPreset = loadTeamPreset;
+
+// 並び替え機能
 export function optimizeLineup(type) {
     if (type === 'obp') {
         lineupData.sort((a, b) => b.obp - a.obp);
     } else if (type === 'sabermetrics') {
         const sorted = [...lineupData].sort((a, b) => (b.obp + b.slg) - (a.obp + a.slg));
         const newOrder = Array(9).fill(null);
-        newOrder[1] = sorted[0]; newOrder[3] = sorted[1]; newOrder[0] = sorted[2];
-        newOrder[2] = sorted[3]; newOrder[4] = sorted[4]; newOrder[5] = sorted[5];
+        newOrder[3] = sorted[0]; newOrder[1] = sorted[1]; newOrder[2] = sorted[2];
+        newOrder[0] = sorted[3]; newOrder[4] = sorted[4]; newOrder[5] = sorted[5];
         newOrder[6] = sorted[6]; newOrder[7] = sorted[7]; newOrder[8] = sorted[8];
-        lineupData = newOrder;
+        lineupData = newOrder.map(d => d || sorted[8]);
     }
     renderLineupTable();
     calcLineupScore();
     alert('打順を最適化しました。');
 }
+window.optimizeLineup = optimizeLineup;
 
 export function clearLineup() {
     if(!confirm('初期状態に戻しますか？')) return;
@@ -224,33 +271,32 @@ export function clearLineup() {
     renderLineupTable();
     calcLineupScore();
 }
+window.clearLineup = clearLineup;
+
+// エラー回避用ダミー
+export function moveBatter(idx, dir) {}
+window.moveBatter = moveBatter;
 
 // ==========================================
-// Monte Carlo Simulation
+// 3. Monte Carlo Simulation (Chart.js)
 // ==========================================
 
 let simChartInstance = null;
 
+// ★重要: シミュレーション実行関数（元のロジックを復元）
 export function runLineupSimulation() {
     const games = 1000;
     const scores = {};
     let totalScore = 0;
-    let wins = 0; // 仮想敵(3.5点)に勝った数
+    let wins = 0; 
 
-    // 簡易ステータス変換 (OBP/SLG -> 確率)
+    // lineupData配列を使って確率計算
     const players = lineupData.map(d => {
-        // 推定打率 (OBPから逆算、リーグ平均的な四球率を仮定)
         const estAvg = Math.max(0.150, d.obp - 0.060); 
-        // 推定ISO (SLG - AVG)
         const estIso = Math.max(0, d.slg - estAvg);
-        
-        // 確率分布の作成
-        const probBB = d.obp - estAvg; // 四球率
-        const probHit = estAvg;        // 安打率
-        const probOut = 1 - d.obp;     // 凡退率
-        
-        // ヒットの内訳 (ISOの大きさで長打率を変える簡易モデル)
-        // HR割合はISOに依存
+        const probBB = d.obp - estAvg;
+        const probHit = estAvg;        
+        const probOut = 1 - d.obp;     
         const hrRatio = Math.min(0.25, estIso * 0.8); 
         const twoBaseRatio = Math.min(0.30, estIso * 1.0);
         
@@ -259,98 +305,118 @@ export function runLineupSimulation() {
             probBB: probOut + probBB,
             prob1B: probOut + probBB + (probHit * (1 - hrRatio - twoBaseRatio)),
             prob2B: probOut + probBB + (probHit * (1 - hrRatio)),
-            // probHR is 1.0
         };
     });
 
     for (let g = 0; g < games; g++) {
         let gameScore = 0;
         let currentBatter = 0;
-
         for (let inning = 1; inning <= 9; inning++) {
             let outs = 0;
-            let bases = [0, 0, 0]; // 1塁, 2塁, 3塁 (0=なし, 1=あり)
-
+            let bases = [0, 0, 0]; 
             while (outs < 3) {
                 const p = players[currentBatter];
                 const roll = Math.random();
-
                 if (roll < p.probOut) {
-                    // アウト
                     outs++;
                 } else if (roll < p.probBB) {
-                    // 四球 (押し出し処理)
-                    if (bases[0]) {
-                        if (bases[1]) {
-                            if (bases[2]) {
-                                gameScore++; // 押し出し
-                            }
-                            bases[2] = 1;
-                        }
-                        bases[1] = 1;
-                    }
-                    bases[0] = 1;
+                    if (bases[0]) { if (bases[1]) { if (bases[2]) { gameScore++; } bases[2]=1; } bases[1]=1; } bases[0]=1;
                 } else {
-                    // ヒット系の共通処理 (ランナー生還判定)
                     let hitScore = 0;
-                    
                     if (roll < p.prob1B) {
-                        // 単打 (2塁ランナーは50%で生還と仮定)
                         hitScore += bases[2];
-                        if (bases[1]) {
-                             // 2塁ランナーの本塁生還率 (簡易)
-                             if (Math.random() > 0.4) { hitScore++; bases[1]=0; } else { bases[2]=1; bases[1]=0; }
-                        }
-                        bases[2] = bases[1]; // 2塁→3塁 (上記で処理済みだが念のため)
-                        if(bases[0]) bases[1] = 1; // 1塁→2塁
-                        bases[0] = 1;
+                        if (bases[1]) { if (Math.random() > 0.4) { hitScore++; bases[1]=0; } else { bases[2]=1; bases[1]=0; } }
+                        bases[2] = bases[1]; if(bases[0]) bases[1] = 1; bases[0] = 1;
                     } else if (roll < p.prob2B) {
-                        // 二塁打
-                        hitScore += bases[2] + bases[1]; // 2,3塁は生還
-                        if (bases[0]) { hitScore++; bases[0]=0; } // 1塁も生還
+                        hitScore += bases[2] + bases[1]; if (bases[0]) { hitScore++; bases[0]=0; }
                         bases[2] = 0; bases[1] = 1; bases[0] = 0;
                     } else {
-                        // 本塁打
                         hitScore += bases[0] + bases[1] + bases[2] + 1;
                         bases = [0, 0, 0];
                     }
                     gameScore += hitScore;
                 }
-
                 currentBatter = (currentBatter + 1) % 9;
             }
         }
-        
         scores[gameScore] = (scores[gameScore] || 0) + 1;
         totalScore += gameScore;
-        if (gameScore >= 4) wins++; // 3.5点を基準に勝敗判定
+        if (gameScore >= 4) wins++; 
     }
 
     // 結果表示
-    document.getElementById('sim_avg_score').innerText = (totalScore / games).toFixed(2);
-    document.getElementById('sim_win_rate').innerText = ((wins / games) * 100).toFixed(1);
+    const avgScore = (totalScore / games).toFixed(2);
+    const winRate = ((wins / games) * 100).toFixed(1);
+
+    // テキスト更新エリアを探す
+    const avgEl = document.getElementById('sim_avg_score');
+    if(avgEl) avgEl.innerText = avgScore;
+    
+    const winRateEl = document.getElementById('sim_win_rate');
+    if(winRateEl) winRateEl.innerText = winRate;
+    
+    // もしIDで見つからなければ、グラフの下のテキストエリアを探す
+    if (!avgEl) {
+        const fallbackEl = document.querySelector('.text-xs.text-slate-500.mt-2'); 
+        if(fallbackEl) fallbackEl.innerHTML = `平均: <b>${avgScore}</b>点　勝率(vs 3.5点): <b>${winRate}%</b>`;
+    }
 
     drawSimChart(scores, games);
+    
+    // ボタンの演出
+    const btn = document.querySelector('button[onclick="runLineupSimulation()"]');
+    if(btn) {
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '<i class="fa-solid fa-check mr-1"></i>完了';
+        setTimeout(()=>btn.innerHTML = originalText, 1500);
+    }
 }
+window.runLineupSimulation = runLineupSimulation; // HTML onclick対応
 
 function drawSimChart(scores, games) {
-    const ctx = document.getElementById('simChart');
-    if (!ctx) return;
+    let ctx = document.getElementById('simChart');
+    
+    // Canvasがない場合、自動生成を試みる
+    if (!ctx) {
+        // "得点力シミュレーション"の文字があるエリアの近くを探す
+        const headers = Array.from(document.querySelectorAll('h3, div')).find(el => el.innerText && el.innerText.includes('得点力シミュレーション'));
+        if (headers) {
+             const container = headers.parentElement.querySelector('.bg-slate-50') || headers.parentElement;
+             // 既存の内容をクリアしてCanvas追加
+             // ただしボタンなどは消さないように注意。Canvas用のコンテナがあればそれを使う
+             let graphDiv = container.querySelector('#sim_graph_container');
+             if(!graphDiv) {
+                 // グラフ用の箱を作る
+                 graphDiv = document.createElement('div');
+                 graphDiv.id = 'sim_graph_container';
+                 graphDiv.style.height = '160px';
+                 graphDiv.style.marginTop = '10px';
+                 container.appendChild(graphDiv);
+             }
+             graphDiv.innerHTML = '<canvas id="simChart"></canvas>';
+             ctx = document.getElementById('simChart');
+        } else {
+            return;
+        }
+    }
 
-    // 0点〜10点までの分布を作成
     const labels = [];
     const data = [];
     for (let i = 0; i <= 10; i++) {
         labels.push(i + '点');
         data.push(((scores[i] || 0) / games * 100).toFixed(1));
     }
-    // 11点以上をまとめる
     let over10 = 0;
     Object.keys(scores).forEach(s => { if (parseInt(s) > 10) over10 += scores[s]; });
     labels.push('11+');
     data.push((over10 / games * 100).toFixed(1));
 
     if (simChartInstance) simChartInstance.destroy();
+    
+    if (typeof Chart === 'undefined') {
+        alert("Chart.jsライブラリが見つかりません。シミュレーション結果は平均点のみ表示されます。");
+        return;
+    }
 
     simChartInstance = new Chart(ctx, {
         type: 'bar',
@@ -359,9 +425,10 @@ function drawSimChart(scores, games) {
             datasets: [{
                 label: '確率 (%)',
                 data: data,
-                backgroundColor: 'rgba(79, 70, 229, 0.6)',
-                borderColor: 'rgba(79, 70, 229, 1)',
-                borderWidth: 1
+                backgroundColor: 'rgba(99, 102, 241, 0.6)',
+                borderColor: 'rgba(99, 102, 241, 1)',
+                borderWidth: 1,
+                borderRadius: 4
             }]
         },
         options: {
@@ -370,40 +437,8 @@ function drawSimChart(scores, games) {
             plugins: { legend: { display: false } },
             scales: {
                 y: { beginAtZero: true, display: false },
-                x: { grid: { display: false }, ticks: { font: { size: 9 } } }
+                x: { grid: { display: false }, ticks: { font: { size: 10 } } }
             }
         }
     });
-}
-
-// プリセットチームの読み込み
-export function loadTeamPreset(teamKey) {
-    const data = TEAM_PRESETS[teamKey];
-    if (!data) {
-        alert("データが見つかりません");
-        return;
-    }
-
-    const tableBody = document.getElementById('lineup_tbody');
-    if (!tableBody) return;
-    
-    const trs = tableBody.querySelectorAll('tr');
-    
-    data.players.forEach((player, index) => {
-        if (index < trs.length) {
-            const inputs = trs[index].querySelectorAll('input');
-            if (inputs.length >= 3) {
-                inputs[0].value = player.name;
-                inputs[1].value = player.obp.toFixed(3);
-                inputs[2].value = player.slg.toFixed(3);
-                
-                // 再計算イベント発火
-                inputs[1].dispatchEvent(new Event('input'));
-                inputs[2].dispatchEvent(new Event('input'));
-            }
-        }
-    });
-
-    if (typeof window.updateLineupData === 'function') window.updateLineupData();
-    // alert(`${data.name} のデータを読み込みました`);
 }
