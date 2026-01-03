@@ -1,6 +1,7 @@
 /* js/tabs/team.js */
 
 import { getVal, setTxt, clearAllErrors, setFieldError, showError } from '../core/utils.js';
+import { TEAM_PRESETS } from '../core/teams_data.js';
 
 // ==========================================
 // チーム分析 (Pythagorean Expectation)
@@ -373,4 +374,36 @@ function drawSimChart(scores, games) {
             }
         }
     });
+}
+
+// プリセットチームの読み込み
+export function loadTeamPreset(teamKey) {
+    const data = TEAM_PRESETS[teamKey];
+    if (!data) {
+        alert("データが見つかりません");
+        return;
+    }
+
+    const tableBody = document.getElementById('lineup_tbody');
+    if (!tableBody) return;
+    
+    const trs = tableBody.querySelectorAll('tr');
+    
+    data.players.forEach((player, index) => {
+        if (index < trs.length) {
+            const inputs = trs[index].querySelectorAll('input');
+            if (inputs.length >= 3) {
+                inputs[0].value = player.name;
+                inputs[1].value = player.obp.toFixed(3);
+                inputs[2].value = player.slg.toFixed(3);
+                
+                // 再計算イベント発火
+                inputs[1].dispatchEvent(new Event('input'));
+                inputs[2].dispatchEvent(new Event('input'));
+            }
+        }
+    });
+
+    if (typeof window.updateLineupData === 'function') window.updateLineupData();
+    // alert(`${data.name} のデータを読み込みました`);
 }

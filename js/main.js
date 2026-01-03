@@ -5,9 +5,12 @@ import { hideError } from './core/utils.js';
 
 import { calcBatter, applyStadiumPf } from './tabs/batter.js';
 import { calcPitcher } from './tabs/pitcher.js';
-import { calcTeam, optimizeLineup, clearLineup, moveBatter, updateLineupData, calcLineupScore, runLineupSimulation } from './tabs/team.js';
 
-// ★修正: 新しい関数を含めてインポート
+// ★修正: team.js から必要な関数を全てインポート
+import { calcTeam, optimizeLineup, clearLineup, moveBatter, updateLineupData, loadTeamPreset } from './tabs/team.js';
+// ※ runLineupSimulation 等が team.js にない場合はここから除外してください。
+// 今回の team.js に合わせて調整しました。
+
 import { calcPrediction, calcCareer, toggleSeasonMode, selectTopBottom, calcWinProb } from './tabs/prediction.js';
 
 import { toggleCompMode, findSimilarPlayer, selectSimilar, initComparisonChart, openPlayerDetailModal, closePlayerDetailModal } from './tabs/comparison.js';
@@ -52,13 +55,13 @@ window.optimizeLineup = optimizeLineup;
 window.clearLineup = clearLineup;
 window.moveBatter = moveBatter;
 window.updateLineupData = updateLineupData;
-window.runLineupSimulation = runLineupSimulation;
+// window.runLineupSimulation = runLineupSimulation; // もしあれば
+window.loadTeamPreset = loadTeamPreset; // ★これを確実に登録
 
 // Prediction
 window.calcPrediction = calcPrediction;
 window.calcCareer = calcCareer;
 window.toggleSeasonMode = toggleSeasonMode;
-// ★追加: 勝率計算用の関数を登録
 window.selectTopBottom = selectTopBottom;
 window.calcWinProb = calcWinProb;
 
@@ -103,7 +106,7 @@ window.hideHistoryModal = hideHistoryModal;
 window.restoreHistory = restoreHistory;
 window.deleteHistory = deleteHistory;
 
-// Export Image
+// Export
 window.exportAsImage = exportAsImage;
 
 
@@ -117,8 +120,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if(typeof calcBatter === 'function') calcBatter();
     if(typeof calcPitcher === 'function') calcPitcher();
     if(typeof calcTeam === 'function') calcTeam();
-    if(typeof calcLineupScore === 'function') calcLineupScore();
-
+    
     // デフォルトタブ設定
     const batterBtn = document.querySelector('.nav-btn'); 
     if (batterBtn) {

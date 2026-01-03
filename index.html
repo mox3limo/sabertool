@@ -599,6 +599,33 @@
                 </div>
             </div>
 
+            <div class="glass-panel p-4 mb-6 border-l-4 border-orange-500 bg-orange-50/30">
+                <div class="flex flex-wrap items-center justify-between gap-4">
+                    <div>
+                        <h3 class="text-sm font-bold text-slate-700 uppercase">
+                            <i class="fa-solid fa-users-gear mr-2 text-orange-500"></i>2025 チームプリセット読込
+                        </h3>
+                        <p class="text-xs text-slate-500">選択したチームの予想オーダーを反映します</p>
+                    </div>
+                    <div class="flex gap-2">
+                        <select id="team_preset_select" class="text-xs border border-slate-300 rounded p-2 bg-white font-bold text-slate-700">
+                            <option value="" disabled selected>チームを選択...</option>
+                            <optgroup label="セ・リーグ">
+                                <option value="tigers">阪神タイガース</option>
+                                <option value="giants">読売ジャイアンツ</option>
+                                <option value="baystars">横浜DeNA</option>
+                                </optgroup>
+                            <optgroup label="パ・リーグ">
+                                <option value="hawks">ソフトバンク</option>
+                                </optgroup>
+                        </select>
+                        <button onclick="loadTeamPreset(document.getElementById('team_preset_select').value)" class="px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white text-xs font-bold rounded shadow transition">
+                            読込
+                        </button>
+                    </div>
+                </div>
+            </div>
+
             <div class="mt-6 glass-panel p-6 border-t-4 border-indigo-500" id="team_lineup_card"> <div class="flex justify-between items-center mb-4">
                     <h3 class="text-lg font-bold text-slate-700 uppercase">
                         <i class="fa-solid fa-list-ol mr-2 text-indigo-500"></i>Lineup Optimizer
