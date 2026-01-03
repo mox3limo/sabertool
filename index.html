@@ -802,6 +802,21 @@
                                 <div class="w-10 h-10 border-2 border-slate-300 bg-white peer-checked:bg-yellow-400 peer-checked:border-yellow-500 transition-colors shadow-sm"></div>
                             </label>
                         </div>
+
+                        <div class="mt-4 mb-2">
+                            <label class="text-[10px] font-bold text-slate-400 block mb-1">現在の打順 (チームタブ連携)</label>
+                            <select id="wp_batter_order" class="w-full text-xs border border-slate-200 rounded p-1.5 bg-slate-50 font-bold text-slate-700">
+                                <option value="0">1番打者</option>
+                                <option value="1">2番打者</option>
+                                <option value="2">3番打者</option>
+                                <option value="3">4番打者</option>
+                                <option value="4">5番打者</option>
+                                <option value="5">6番打者</option>
+                                <option value="6">7番打者</option>
+                                <option value="7">8番打者</option>
+                                <option value="8">9番打者</option>
+                            </select>
+                        </div>
                         
                         <button onclick="calcWinProb()" class="w-full py-3 bg-pink-500 hover:bg-pink-600 text-white font-bold rounded-xl shadow-lg shadow-pink-200 transition transform active:scale-95">
                             <i class="fa-solid fa-calculator mr-2"></i>勝率を計算する
