@@ -5,11 +5,20 @@ import { state } from '../modules/state.js';
 
 let currentCompMode = 'batter';
 
+// 共通ヘルパー: ラベル更新
+function updateChartLabel(lg) {
+    const lbl = document.getElementById('chart_avg_label');
+    if (lbl) {
+        const lgName = lg === 'Central' ? 'セ・リーグ' : 'パ・リーグ';
+        lbl.innerText = `比較対象: ${lgName}平均`;
+    }
+}
+
 // 初期描画関数
 export function initComparisonChart() {
     try {
         const getNum = (id) => { const el = document.getElementById(id); return el ? parseFloat(el.innerText) || 0 : 0; };
-        
+
         let u;
         if (currentCompMode === 'batter') {
             u = { ops: getNum('res_ops'), avg: getNum('res_avg'), slg: getNum('res_slg'), obp: getNum('res_obp') };
@@ -18,10 +27,14 @@ export function initComparisonChart() {
         }
 
         const currentLg = (state && typeof state.currentLeague === 'string') ? state.currentLeague : 'Central';
+
+        // ★追加: ラベル更新
+        updateChartLabel(currentLg);
+
         const lgDB = DB[currentLg] || DB['Central'];
-        const lgData = (lgDB && lgDB[currentCompMode==='batter'?'bat':'pit']) || {};
-        
-        if(typeof drawRadar === 'function') {
+        const lgData = (lgDB && lgDB[currentCompMode === 'batter' ? 'bat' : 'pit']) || {};
+
+        if (typeof drawRadar === 'function') {
             drawRadar(u, { name: '比較なし', data: {} }, lgData, currentCompMode);
         }
     } catch (e) {
@@ -29,16 +42,16 @@ export function initComparisonChart() {
     }
 }
 
-export function toggleCompMode(m) { 
-    currentCompMode = m; 
-    const bB=document.getElementById('btn_comp_bat'), bP=document.getElementById('btn_comp_pit');
+export function toggleCompMode(m) {
+    currentCompMode = m;
+    const bB = document.getElementById('btn_comp_bat'), bP = document.getElementById('btn_comp_pit');
     if (bB && bP) {
-        if(m==='batter') { 
-            bB.className="flex-1 py-2 text-xs font-bold rounded bg-white shadow-sm text-purple-600 transition"; 
-            bP.className="flex-1 py-2 text-xs font-bold rounded text-slate-400 transition"; 
-        } else { 
-            bP.className="flex-1 py-2 text-xs font-bold rounded bg-white shadow-sm text-purple-600 transition"; 
-            bB.className="flex-1 py-2 text-xs font-bold rounded text-slate-400 transition"; 
+        if (m === 'batter') {
+            bB.className = "flex-1 py-2 text-xs font-bold rounded bg-white shadow-sm text-purple-600 transition";
+            bP.className = "flex-1 py-2 text-xs font-bold rounded text-slate-400 transition";
+        } else {
+            bP.className = "flex-1 py-2 text-xs font-bold rounded bg-white shadow-sm text-purple-600 transition";
+            bB.className = "flex-1 py-2 text-xs font-bold rounded text-slate-400 transition";
         }
     }
     initComparisonChart();
@@ -58,7 +71,7 @@ export function findSimilarPlayer() {
         }
 
         let db = mode === 'batter' ? PLAYERS.filter(p => typeof p.ops !== 'undefined') : PLAYERS.filter(p => typeof p.era !== 'undefined');
-        if (!db || db.length === 0) db = PLAYERS.slice(); 
+        if (!db || db.length === 0) db = PLAYERS.slice();
 
         const norm = (v, min, max, invert) => {
             if (!isFinite(v)) return 0.5;
@@ -82,14 +95,14 @@ export function findSimilarPlayer() {
 
         const metrics = [];
         const syncWithRadar = document.getElementById('sim_sync_with_radar')?.checked;
-        
+
         if (syncWithRadar) {
-            if (mode === 'batter') metrics.push('avg','ops','slg','isop','bbk');
-            else metrics.push('era','fip','k9','bb9','whip');
+            if (mode === 'batter') metrics.push('avg', 'ops', 'slg', 'isop', 'bbk');
+            else metrics.push('era', 'fip', 'k9', 'bb9', 'whip');
         } else {
-            if (mode === 'batter') metrics.push('ops','avg','slg'); 
-            else metrics.push('era','fip','k9');
-            
+            if (mode === 'batter') metrics.push('ops', 'avg', 'slg');
+            else metrics.push('era', 'fip', 'k9');
+
             if (document.getElementById('sim_include_isop')?.checked) metrics.push('isop');
             if (document.getElementById('sim_include_bbk')?.checked) metrics.push('bbk');
             if (document.getElementById('sim_include_bb9')?.checked) metrics.push('bb9');
@@ -100,13 +113,13 @@ export function findSimilarPlayer() {
         db.forEach(p => {
             const uVec = [], pVec = [];
             metrics.forEach(m => {
-                let mKey = m === 'ops' ? 'ops' : m; 
+                let mKey = m === 'ops' ? 'ops' : m;
                 const def = metricDefs[mKey] || metricDefs[m];
                 if (!def) return;
-                
-                let uVal = u[m] !== undefined ? u[m] : (m === 'isop' ? ((u.slg||0)-(u.avg||0)) : 0);
-                let pVal = p[m] !== undefined ? p[m] : (m === 'isop' ? ((p.slg||0)-(p.avg||0)) : 0);
-                
+
+                let uVal = u[m] !== undefined ? u[m] : (m === 'isop' ? ((u.slg || 0) - (u.avg || 0)) : 0);
+                let pVal = p[m] !== undefined ? p[m] : (m === 'isop' ? ((p.slg || 0) - (p.avg || 0)) : 0);
+
                 uVec.push(norm(uVal, def.min, def.max, def.inv));
                 pVec.push(norm(pVal, def.min, def.max, def.inv));
             });
@@ -115,18 +128,18 @@ export function findSimilarPlayer() {
             for (let i = 0; i < uVec.length; i++) {
                 const mKey = metrics[i] === 'ops' ? 'ops' : metrics[i];
                 let w = 1;
-                try { const el = document.getElementById('weight_' + mKey); if (el) w = parseFloat(el.value) || 1; } catch(e) {}
+                try { const el = document.getElementById('weight_' + mKey); if (el) w = parseFloat(el.value) || 1; } catch (e) { }
                 sum += (w * Math.pow(uVec[i] - pVec[i], 2));
             }
             const dist = Math.sqrt(sum);
-            const maxDist = Math.sqrt(uVec.length); 
+            const maxDist = Math.sqrt(uVec.length);
             const simPct = Math.max(0, (1 - dist / maxDist) * 100);
             matches.push({ player: p, sim: simPct });
         });
 
         if (matches.length === 0) { alert('類似選手が見つかりませんでした'); return; }
 
-        matches.sort((a,b) => b.sim - a.sim);
+        matches.sort((a, b) => b.sim - a.sim);
         const topMatches = matches.slice(0, 8);
         window.lastSimMatches = topMatches;
         window.lastSimMode = mode;
@@ -180,13 +193,17 @@ export function findSimilarPlayer() {
             if (mCard) mCard.classList.remove('hidden');
         }
 
-        if(typeof drawRadar === 'function') {
+        if (typeof drawRadar === 'function') {
             const currentLg = (state && typeof state.currentLeague === 'string') ? state.currentLeague : 'Central';
+
+            // ★追加: ラベル更新
+            updateChartLabel(currentLg);
+
             const lgDB = DB[currentLg] || DB['Central'];
-            const lgData = (lgDB && lgDB[mode==='batter'?'bat':'pit']) || {};
+            const lgData = (lgDB && lgDB[mode === 'batter' ? 'bat' : 'pit']) || {};
             drawRadar(u, primary.player, lgData, mode);
         }
-    } catch(e) { console.error(e); }
+    } catch (e) { console.error(e); }
 }
 
 export function selectSimilar(idx) {
@@ -195,24 +212,28 @@ export function selectSimilar(idx) {
         const mode = window.lastSimMode || currentCompMode;
         if (!arr[idx]) return;
         const sel = arr[idx].player;
-        
+
         document.getElementById('sim_name').innerText = sel.name || '--';
         document.getElementById('sim_team').innerText = sel.team || '--';
         document.getElementById('sim_type').innerText = `タイプ: ${sel.type || '--'}`;
-        document.getElementById('sim_score').innerText = (arr[idx].sim||0).toFixed(1) + '%';
-        
+        document.getElementById('sim_score').innerText = (arr[idx].sim || 0).toFixed(1) + '%';
+
         const getNum = (id) => { const el = document.getElementById(id); return el ? parseFloat(el.innerText) || 0 : 0; };
         let u;
         if (mode === 'batter') u = { ops: getNum('res_ops'), avg: getNum('res_avg'), slg: getNum('res_slg'), obp: getNum('res_obp') };
         else u = { era: getNum('res_era'), fip: getNum('res_fip'), k9: getNum('res_k9'), bb9: getNum('res_bb9'), whip: getNum('res_whip') };
-        
-        if(typeof drawRadar === 'function') {
+
+        if (typeof drawRadar === 'function') {
             const currentLg = (state && typeof state.currentLeague === 'string') ? state.currentLeague : 'Central';
+
+            // ★追加: ラベル更新
+            updateChartLabel(currentLg);
+
             const lgDB = DB[currentLg] || DB['Central'];
-            const lgData = (lgDB && lgDB[mode==='batter'?'bat':'pit']) || {};
+            const lgData = (lgDB && lgDB[mode === 'batter' ? 'bat' : 'pit']) || {};
             drawRadar(u, sel, lgData, mode);
         }
-    } catch(e) { console.error(e); }
+    } catch (e) { console.error(e); }
 }
 
 // ★修正: 詳細モーダル（フルスペック表示）
@@ -244,7 +265,7 @@ export function openPlayerDetailModal(idx) {
     container.className = "grid grid-cols-2 md:grid-cols-3 gap-3 text-center";
 
     // データ生成ヘルパー
-    const createItem = (label, val, unit='', subLabel='') => `
+    const createItem = (label, val, unit = '', subLabel = '') => `
         <div class="p-2 bg-white rounded-lg shadow-sm border border-slate-100 flex flex-col items-center justify-center">
             <div class="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1">${label}</div>
             <div class="text-xl font-black text-slate-700 leading-none">${val}<span class="text-xs font-normal text-slate-400 ml-0.5">${unit}</span></div>
@@ -269,7 +290,7 @@ export function openPlayerDetailModal(idx) {
         html += createItem('出塁率', p.obp ? p.obp.toFixed(3).replace(/^0\./, '.') : '---');
         html += createItem('長打率', p.slg ? p.slg.toFixed(3).replace(/^0\./, '.') : '---');
         html += createItem('ISO', (p.slg && p.avg) ? (p.slg - p.avg).toFixed(3).replace(/^0\./, '.') : '---', '', '純長打力');
-        
+
         // 4行目(1つ): IsoD
         html += createItem('IsoD', (p.obp && p.avg) ? (p.obp - p.avg).toFixed(3).replace(/^0\./, '.') : '---', '', '純選球眼');
 
@@ -294,7 +315,7 @@ export function openPlayerDetailModal(idx) {
         html += createItem('K/9', p.k9 ? p.k9.toFixed(1) : '---', '', '奪三振率');
         html += createItem('BB/9', p.bb9 ? p.bb9.toFixed(1) : '---', '', '与四球率');
     }
-    
+
     container.innerHTML = html;
 }
 
