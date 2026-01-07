@@ -1,8 +1,9 @@
+/* js/core/utils.js */
+
 // ==========================================
-// js/core/utils.js
+// 数値変換・入力取得
 // ==========================================
 
-// 数値変換・フォーマット
 export function toNumberInput(v) {
     if (v === null || v === undefined) return 0;
     if (typeof v === 'string') {
@@ -23,16 +24,35 @@ export function getVal(id) {
     return el ? Math.max(0, toNumberInput(el.value)) : 0; 
 }
 
+// ★追加: 入力欄に値をセットする関数 (スマート入力機能などで使用)
+export function setVal(id, val) {
+    const el = document.getElementById(id);
+    if (el) {
+        el.value = val;
+    }
+}
+
+// ==========================================
+// 表示更新・フォーマット
+// ==========================================
+
 export function setTxt(id, v, m='std') { 
     const el = document.getElementById(id); if(!el) return; 
     if(typeof v === 'string') { el.innerText = v; return; }
     if(typeof v!=='number'||!isFinite(v)){ el.innerText="---"; return; }
+    
     if (m === 'rate') {
-        el.innerText = v.toFixed(3).replace(/^0\./, '.'); // 0.300 -> .300 表記にする場合ここを調整可能
+        // 率 (打率など): .300
+        el.innerText = v.toFixed(3).replace(/^0\./, '.'); 
     } else if (m === 'pct') {
-        el.innerText = (v*100).toFixed(1) + '%';
-    } else {
+        // パーセント: 12.3%
+        el.innerText = (v * 100).toFixed(1) + '%';
+    } else if (m === 'std') {
+        // 標準 (防御率など): 1.23
         el.innerText = v.toFixed(2);
+    } else {
+        // その他 (整数やデフォルト)
+        el.innerText = v.toFixed(3); // 指定なしの場合
     }
 }
 
@@ -41,6 +61,7 @@ export function parseIP(v) {
     if (v === null || v === undefined) return 0;
     if (typeof v === 'string') v = v.trim();
 
+    // "100 1/3" 形式への対応
     if (typeof v === 'string' && /\d+\s*[+ ]?\s*1\/3/.test(v)) {
         const num = parseInt(v.match(/\d+/)[0], 10);
         return isNaN(num) ? 0 : num + 1/3;
@@ -50,49 +71,68 @@ export function parseIP(v) {
         return isNaN(num) ? 0 : num + 2/3;
     }
 
+    // 通常の数値パース
     const n = toNumberInput(v);
     if (!isFinite(n) || n <= 0) return 0;
     const intPart = Math.floor(n);
     const decimal = Math.round((n - intPart) * 10);
+    
+    // .1 -> 1/3, .2 -> 2/3 の変換
     if (decimal === 1) return intPart + 1/3;
     if (decimal === 2) return intPart + 2/3;
+    
+    // 小数点以下が微妙な場合の補正
     const frac = n - intPart;
     if (frac > 0.2 && frac < 0.5) return intPart + 1/3;
     if (frac >= 0.5 && frac < 0.85) return intPart + 2/3;
+    
     return intPart;
 }
 
-// HTMLエスケープ
-export function escapeHtml(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+// ==========================================
+// その他ユーティリティ
+// ==========================================
+
+// HTMLエスケープ (XSS対策)
+export function escapeHtml(s) { 
+    if (!s) return '';
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); 
+}
 
 // バリデーション・エラー表示
 export function showError(message) {
-    const alert = document.getElementById('error_alert');
-    const msgEl = document.getElementById('error_message');
+    const alert = document.getElementById('error_alert') || document.getElementById('error_container'); // ID揺れに対応
+    const msgEl = document.getElementById('error_message') || document.getElementById('error_msg');
+    
     if (alert && msgEl) {
         msgEl.innerText = message;
         alert.classList.remove('hidden');
         setTimeout(() => hideError(), 5000);
+    } else {
+        // 万が一HTML側に要素がない場合のアラート
+        console.warn('Error UI elements not found:', message);
+        // alert(message); // 邪魔になるならコメントアウト
     }
 }
 
 export function hideError() {
-    const alert = document.getElementById('error_alert');
+    const alert = document.getElementById('error_alert') || document.getElementById('error_container');
     if (alert) alert.classList.add('hidden');
 }
 
 export function setFieldError(fieldId, hasError) {
     const field = document.getElementById(fieldId);
     if (field) {
-        if (hasError) field.classList.add('error');
-        else field.classList.remove('error');
+        if (hasError) field.classList.add('input-error', 'ring-2', 'ring-red-500'); // クラス名を補強
+        else field.classList.remove('input-error', 'ring-2', 'ring-red-500');
     }
 }
 
 export function clearAllErrors() {
-    document.querySelectorAll('.input-field.error').forEach(el => {
-        el.classList.remove('error');
+    document.querySelectorAll('.input-error, .error').forEach(el => {
+        el.classList.remove('input-error', 'error', 'ring-2', 'ring-red-500');
     });
+    hideError();
 }
 
 // デバウンス関数（連続入力時の処理遅延）
