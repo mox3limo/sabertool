@@ -471,12 +471,27 @@ export function applySafeImport() {
     closeSafeImportModal();
 }
 
+function escapeHtml(text) {
+    if (text === null || text === undefined) return '';
+    return String(text)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
+
 function renderPreviewTable(items) {
     if (!items || items.length===0) return '<div>表示するデータがありません</div>';
     const keys = Object.keys(items[0]);
     let html = '<table class="w-full text-sm border-collapse">';
-    html += '<thead><tr>' + keys.map(k=>`<th class="border px-2 py-1 bg-gray-50">${k}</th>`).join('') + '</tr></thead>';
-    html += '<tbody>' + items.map(it=>' <tr>' + keys.map(k=>`<td class="border px-2 py-1">${String(it[k]!==undefined?it[k]:'')}</td>`).join('') + '</tr>').join('') + '</tbody>';
+    
+    // ヘッダーもエスケープする
+    html += '<thead><tr>' + keys.map(k => `<th class="border px-2 py-1 bg-gray-50">${escapeHtml(k)}</th>`).join('') + '</tr></thead>';
+    
+    // 中身も escapeHtml() を通してから表示する
+    html += '<tbody>' + items.map(it => ' <tr>' + keys.map(k => `<td class="border px-2 py-1">${escapeHtml(it[k]!==undefined?it[k]:'')}</td>`).join('') + '</tr>').join('') + '</tbody>';
+    
     html += '</table>';
     return html;
 }
