@@ -73,6 +73,15 @@ export function calcPitcher() {
     if(lgData.fip) setTxt('avg_xfip', `平均 ${lgData.fip.toFixed(2)}`);
     if(lgData.fip) setTxt('avg_siera', `平均 ${lgData.fip.toFixed(2)}`);
 
+    // ★追加: WAR (fWAR) の計算
+    // 公式: (League FIP - Pitcher FIP + Replacement Level Adjustment) / 9 * IP / Runs Per Win
+    // Replacement Level Adjustment ≈ 1.00 (FIP scale)
+    const lgFip = lgData.fip || 3.50;
+    const replacementDiff = 1.00;
+    const runsPerWin = 10;
+    const war = ((lgFip - fip + replacementDiff) * (ip / 9)) / runsPerWin;
+    setTxt('res_p_war', war, 'std');
+
     // ★修正: Luck & Defense ゲージの挙動を細かくする
     const bar = document.getElementById('diff_bar');
     const bdg = document.getElementById('diff_badge');
