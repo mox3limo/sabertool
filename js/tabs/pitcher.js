@@ -3,6 +3,16 @@ import { getVal, setTxt, parseIP, clearAllErrors, setFieldError, showError } fro
 import { DB } from '../core/data.js';
 import { state } from '../modules/state.js';
 
+// ★追加: 球場選択プルダウンの反映処理
+export function applyPitcherStadiumPf() {
+    const sel = document.getElementById('pitcher_stadium_select');
+    const input = document.getElementById('pitcher_pf');
+    if (sel && input) {
+        input.value = sel.value;
+        calcPitcher();
+    }
+}
+
 function validatePitcherInput() {
     clearAllErrors();
     const errors = [];
@@ -20,12 +30,16 @@ export function calcPitcher() {
     const hr = getVal('p_hr'), h = getVal('p_h'), hbp = getVal('p_hbp'), r = getVal('p_r');
     const fipConst = getVal('p_const');
 
+    // ★追加: 球場補正値(PF)の取得
+    let pf = parseFloat(document.getElementById('pitcher_pf')?.value);
+    if (isNaN(pf) || pf <= 0) pf = 1.00;
+
     if (ip <= 0) return;
     
     const era = er * 9 / ip;
     const fipRaw = (13 * hr + 3 * (bb + hbp) - 2 * k) / ip;
     const fip = fipRaw + fipConst;
-    const diff = era - fip; // プラスなら防御率が悪い(運が悪い/守備が悪い), マイナスなら防御率が良い(運が良い)
+    const diff = era - fip; 
     const bip = (ip * 3 + h) - k - hr;
     const whip = (bb + h) / ip;
     const k9 = k * 9 / ip;
@@ -73,25 +87,32 @@ export function calcPitcher() {
     if(lgData.fip) setTxt('avg_xfip', `平均 ${lgData.fip.toFixed(2)}`);
     if(lgData.fip) setTxt('avg_siera', `平均 ${lgData.fip.toFixed(2)}`);
 
-    // ★追加: WAR (fWAR) の計算
-    // 公式: (League FIP - Pitcher FIP + Replacement Level Adjustment) / 9 * IP / Runs Per Win
-    // Replacement Level Adjustment ≈ 1.00 (FIP scale)
+    // ★修正: WAR計算にPFを適用
+    // 球場補正後のFIP = FIP / PF (PFが1.2ならFIPは下がる=評価上がる)
     const lgFip = lgData.fip || 3.50;
     const replacementDiff = 1.00;
     const runsPerWin = 10;
-    const war = ((lgFip - fip + replacementDiff) * (ip / 9)) / runsPerWin;
+    
+    const adjustedFip = fip / pf; // パークファクターで中立化
+    const war = ((lgFip - adjustedFip + replacementDiff) * (ip / 9)) / runsPerWin;
+    
     setTxt('res_p_war', war, 'std');
 
-    // ★修正: Luck & Defense ゲージの挙動を細かくする
+    // WARの文字色変更 (補正ありなら色付け)
+    const warEl = document.getElementById('res_p_war');
+    if (warEl && pf !== 1.0) {
+        warEl.style.color = pf > 1.0 ? '#0891b2' : '#e11d48'; // 投手のPF>1.0は「狭い球場で頑張った」ので青(好評価)
+    } else if (warEl) {
+        warEl.style.color = '';
+    }
+
     const bar = document.getElementById('diff_bar');
     const bdg = document.getElementById('diff_badge');
     if(bar && bdg){
-        // 差分が1.0以上でMAX幅になるように調整 (以前は1.25)
         let w = Math.min(Math.abs(diff) * 50, 50); 
         let l = diff > 0 ? 50 : 50 - w;
         bar.style.left = l + '%'; bar.style.width = w + '%';
         
-        // 色とバッジ判定の細分化
         if (diff > 0.8) { 
             bar.className = 'absolute h-2 rounded-full top-1/2 -translate-y-1/2 bg-red-600 shadow-sm'; 
             bdg.innerText = "VERY UNLUCKY"; 

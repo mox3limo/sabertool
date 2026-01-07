@@ -1,15 +1,19 @@
 /* js/main.js */
+
+// --- Modules ---
 import { setLeague } from './modules/state.js';
-import { switchTab, toggleDarkMode, togglePanel } from './modules/ui.js';
+// ★修正: switchTab と setupTabs は tabs.js から読み込む
+import { setupTabs, switchTab } from './modules/tabs.js';
+import { toggleDarkMode, togglePanel } from './modules/ui.js'; // togglePanel等は ui.js
 import { hideError } from './core/utils.js';
 
+// --- Tabs ---
 import { calcBatter, applyStadiumPf } from './tabs/batter.js';
-import { calcPitcher } from './tabs/pitcher.js';
+// ★修正: 重複していたので1つにまとめ、applyPitcherStadiumPfを追加
+import { calcPitcher, applyPitcherStadiumPf } from './tabs/pitcher.js';
 
-// ★修正: team.js から必要な関数を全てインポート
-import { calcTeam, optimizeLineup, clearLineup, moveBatter, updateLineupData, loadTeamPreset } from './tabs/team.js';
-// ※ runLineupSimulation 等が team.js にない場合はここから除外してください。
-// 今回の team.js に合わせて調整しました。
+// ★修正: runLineupSimulation を追加 (HTMLのボタンで使われているため)
+import { calcTeam, optimizeLineup, clearLineup, moveBatter, updateLineupData, loadTeamPreset, runLineupSimulation } from './tabs/team.js';
 
 import { calcPrediction, calcCareer, toggleSeasonMode, selectTopBottom, calcWinProb } from './tabs/prediction.js';
 
@@ -17,8 +21,10 @@ import { toggleCompMode, findSimilarPlayer, selectSimilar, initComparisonChart, 
 
 import { calcConstant, applyConstant, initTools, applySettingsFromUI, resetSettingsUI } from './tabs/tools.js';
 
+// --- Smart Input ---
 import { openSmartInputModal, closeSmartInputModal, applySmartInput } from './modules/smartInput.js';
 
+// --- Storage & Data ---
 import { 
     loadProfile, saveProfile, deleteCurrentProfile, 
     showSaveProfileModal, hideSaveProfileModal,
@@ -30,10 +36,12 @@ import {
     setupAutoSave
 } from './core/storage.js';
 
+// --- Export ---
+// ※ export.js がない場合エラーになるため、もしエラーが出たら utils.js に変更してください
 import { exportAsImage } from './modules/export.js';
 
 
-// --- Windowへの登録 ---
+// --- Windowへの登録 (HTMLから onclick で呼べるようにする) ---
 
 // UI & State
 window.setLeague = setLeague;
@@ -48,6 +56,7 @@ window.applyStadiumPf = applyStadiumPf;
 
 // Pitcher
 window.calcPitcher = calcPitcher;
+window.applyPitcherStadiumPf = applyPitcherStadiumPf; // ★追加
 
 // Team
 window.calcTeam = calcTeam;
@@ -55,8 +64,8 @@ window.optimizeLineup = optimizeLineup;
 window.clearLineup = clearLineup;
 window.moveBatter = moveBatter;
 window.updateLineupData = updateLineupData;
-// window.runLineupSimulation = runLineupSimulation; // もしあれば
-window.loadTeamPreset = loadTeamPreset; // ★これを確実に登録
+window.runLineupSimulation = runLineupSimulation; // ★有効化
+window.loadTeamPreset = loadTeamPreset;
 
 // Prediction
 window.calcPrediction = calcPrediction;
@@ -112,16 +121,25 @@ window.exportAsImage = exportAsImage;
 
 // 初期化処理
 document.addEventListener('DOMContentLoaded', () => {
+    // Tippy.js (ツールチップ) の初期化
     if(typeof tippy !== 'undefined') tippy('[data-tippy-content]', { allowHTML: true, theme: 'custom' });
 
-    initTools();
-    setupAutoSave();
+    // 各機能の初期化
+    if(typeof setupTabs === 'function') setupTabs(); // ★タブ設定
+    if(typeof initTools === 'function') initTools();
+    if(typeof setupAutoSave === 'function') setupAutoSave();
 
+    // 計算実行
     if(typeof calcBatter === 'function') calcBatter();
     if(typeof calcPitcher === 'function') calcPitcher();
     if(typeof calcTeam === 'function') calcTeam();
+    if(typeof calcPrediction === 'function') calcPrediction();
+    if(typeof calcCareer === 'function') calcCareer();
     
-    // デフォルトタブ設定
+    // プロファイル読み込み
+    if(typeof loadProfile === 'function') loadProfile();
+
+    // デフォルトタブ設定 (batterを開く)
     const batterBtn = document.querySelector('.nav-btn'); 
     if (batterBtn) {
         switchTab('batter', batterBtn);
