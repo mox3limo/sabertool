@@ -561,6 +561,34 @@
                 </div>
                 
                 <div id="pitcher_inputs_area" class="transition-all duration-300">
+    
+                    <div class="mb-4 bg-slate-50 p-3 rounded border border-slate-200 flex flex-wrap items-center gap-3">
+                        <label class="text-xs font-bold text-slate-500"><i class="fa-solid fa-location-dot mr-1"></i>球場補正 (PF)</label>
+                        
+                        <select id="pitcher_stadium_select" class="text-xs border rounded p-1" onchange="applyPitcherStadiumPf()">
+                            <option value="1.00">平均的な球場 (1.00)</option>
+                            <option value="1.15">東京ドーム (1.15)</option>
+                            <option value="1.25">神宮球場 (1.25)</option>
+                            <option value="1.10">横浜スタジアム (1.10)</option>
+                            <option value="0.85">バンテリンドーム (0.85)</option>
+                            <option value="0.90">甲子園球場 (0.90)</option>
+                            <option value="0.95">マツダスタジアム (0.95)</option>
+                            <option value="1.05">PayPayドーム (1.05)</option>
+                            <option value="1.00">京セラドーム (1.00)</option>
+                            <option value="1.05">楽天モバイル (1.05)</option>
+                            <option value="1.00">ベルーナドーム (1.00)</option>
+                            <option value="0.95">ZOZOマリン (0.95)</option>
+                            <option value="0.98">エスコンF (0.98)</option>
+                        </select>
+
+                        <div class="flex items-center gap-1">
+                            <span class="text-[10px] text-slate-400">手動値:</span>
+                            <input type="number" id="pitcher_pf" class="w-16 text-xs border rounded p-1" value="1.00" step="0.01" min="0.5" max="2.0" oninput="calcPitcher()">
+                        </div>
+
+                        <div class="ml-auto text-[10px] text-slate-400">※WAR計算に影響</div>
+                    </div>
+
                     <div class="grid grid-cols-2 gap-3">
                         <div class="col-span-2"><label class="input-label">投球回 (IP)</label><input type="number" id="p_ip" class="input-field" value="160.0" step="0.1" min="0" oninput="calcPitcher()"><p class="text-[10px] text-right text-slate-400">.1=1/3, .2=2/3</p></div>
                         <div><label class="input-label">自責点</label><input type="number" id="p_er" class="input-field" value="50" min="0" oninput="calcPitcher()"></div>
@@ -583,7 +611,7 @@
                             <i class="fa-solid fa-crown text-amber-200 text-4xl opacity-50 -rotate-12"></i>
                         </div>
                         <div class="metric-title text-amber-600 relative z-10">
-                            WAR <i class="fa-solid fa-circle-info info-icon" data-tippy-content="【Wins Above Replacement】<br>FIPベースの投手版WAR。<br>目安: 2.0以上でローテ定着、5.0以上でエース級。"></i>
+                            fWAR <i class="fa-solid fa-circle-info info-icon" data-tippy-content="【Wins Above Replacement】<br>FIPベースの投手版WAR。<br>目安: 2.0以上でローテ定着、5.0以上でエース級。"></i>
                         </div>
                         <div class="metric-value text-amber-700 relative z-10" id="res_p_war">0.0</div>
                         <div class="metric-sub text-amber-600/70">総合貢献</div>
