@@ -3,7 +3,7 @@ import { getVal, setTxt, parseIP, clearAllErrors, setFieldError, showError } fro
 import { DB } from '../core/data.js';
 import { state } from '../modules/state.js';
 
-// ★追加: 球場選択プルダウンの反映処理
+// 球場選択プルダウンの反映処理
 export function applyPitcherStadiumPf() {
     const sel = document.getElementById('pitcher_stadium_select');
     const input = document.getElementById('pitcher_pf');
@@ -30,44 +30,44 @@ export function calcPitcher() {
     const hr = getVal('p_hr'), h = getVal('p_h'), hbp = getVal('p_hbp'), r = getVal('p_r');
     const fipConst = getVal('p_const');
 
-    // ★追加: 球場補正値(PF)の取得
+    // 球場補正値(PF)の取得
     let pf = parseFloat(document.getElementById('pitcher_pf')?.value);
     if (isNaN(pf) || pf <= 0) pf = 1.00;
 
     if (ip <= 0) return;
-    
+
     const era = er * 9 / ip;
     const fipRaw = (13 * hr + 3 * (bb + hbp) - 2 * k) / ip;
     const fip = fipRaw + fipConst;
-    const diff = era - fip; 
+    const diff = era - fip;
     const bip = (ip * 3 + h) - k - hr;
     const whip = (bb + h) / ip;
     const k9 = k * 9 / ip;
     const bb9 = bb * 9 / ip;
-    
-    setTxt('res_era', era); 
-    setTxt('res_fip', fip); 
-    
+
+    setTxt('res_era', era);
+    setTxt('res_fip', fip);
+
     const lobDenom = h + bb + hbp - (1.4 * hr);
     const lob = lobDenom !== 0 ? (h + bb + hbp - r) / lobDenom : 0;
     setTxt('res_lob', lob, 'pct');
-    setTxt('res_whip', whip); 
-    setTxt('res_k9', k9); 
-    setTxt('res_bb9', bb9); 
+    setTxt('res_whip', whip);
+    setTxt('res_k9', k9);
+    setTxt('res_bb9', bb9);
     setTxt('res_hr9', hr * 9 / ip);
     setTxt('res_p_babip', bip > 0 ? (h - hr) / bip : 0, 'rate');
 
     const bf = ip * 3 + h + bb + hbp;
     const k_pct = bf > 0 ? (k / bf) : 0;
-    
+
     setTxt('res_kbb', bb > 0 ? k / bb : 0);
     setTxt('res_p_k_pct', k_pct, 'pct');
-    
+
     const estimatedFb = bip * 0.4;
     const expectedHr = estimatedFb * 0.10;
     const xfip = ((13 * expectedHr + 3 * (bb + hbp) - 2 * k) / ip) + fipConst;
     setTxt('res_xfip', xfip);
-    
+
     let siera = 0;
     if (bf > 0) {
         const k_pa = k / bf, bb_pa = bb / bf, hr_pa = hr / bf;
@@ -77,28 +77,27 @@ export function calcPitcher() {
 
     const currentLg = (state && state.currentLeague) ? state.currentLeague : 'Central';
     const lgData = (DB && DB[currentLg]) ? DB[currentLg].pit : {};
-    
-    if(lgData.era) setTxt('avg_era', `平均 ${lgData.era.toFixed(2)}`);
-    if(lgData.fip) setTxt('avg_fip', `平均 ${lgData.fip.toFixed(2)}`);
-    if(lgData.k9) setTxt('avg_k9', `平均 ${lgData.k9.toFixed(2)}`);
-    if(lgData.bb9) setTxt('avg_bb9', `平均 ${lgData.bb9.toFixed(2)}`);
-    if(lgData.hr9) setTxt('avg_hr9', `平均 ${lgData.hr9.toFixed(2)}`);
-    if(lgData.whip) setTxt('avg_whip', `平均 ${lgData.whip.toFixed(2)}`);
-    if(lgData.fip) setTxt('avg_xfip', `平均 ${lgData.fip.toFixed(2)}`);
-    if(lgData.fip) setTxt('avg_siera', `平均 ${lgData.fip.toFixed(2)}`);
 
-    // ★修正: WAR計算にPFを適用
-    // 球場補正後のFIP = FIP / PF (PFが1.2ならFIPは下がる=評価上がる)
+    if (lgData.era) setTxt('avg_era', `平均 ${lgData.era.toFixed(2)}`);
+    if (lgData.fip) setTxt('avg_fip', `平均 ${lgData.fip.toFixed(2)}`);
+    if (lgData.k9) setTxt('avg_k9', `平均 ${lgData.k9.toFixed(2)}`);
+    if (lgData.bb9) setTxt('avg_bb9', `平均 ${lgData.bb9.toFixed(2)}`);
+    if (lgData.hr9) setTxt('avg_hr9', `平均 ${lgData.hr9.toFixed(2)}`);
+    if (lgData.whip) setTxt('avg_whip', `平均 ${lgData.whip.toFixed(2)}`);
+    if (lgData.fip) setTxt('avg_xfip', `平均 ${lgData.fip.toFixed(2)}`);
+    if (lgData.fip) setTxt('avg_siera', `平均 ${lgData.fip.toFixed(2)}`);
+
+    // WAR計算 (PF適用)
     const lgFip = lgData.fip || 3.50;
     const replacementDiff = 1.00;
     const runsPerWin = 10;
-    
+
     const adjustedFip = fip / pf; // パークファクターで中立化
     const war = ((lgFip - adjustedFip + replacementDiff) * (ip / 9)) / runsPerWin;
-    
+
     setTxt('res_p_war', war, 'std');
 
-    // WARの文字色変更 (補正ありなら色付け)
+    // WARの文字色変更
     const warEl = document.getElementById('res_p_war');
     if (warEl && pf !== 1.0) {
         warEl.style.color = pf > 1.0 ? '#0891b2' : '#e11d48'; // 投手のPF>1.0は「狭い球場で頑張った」ので青(好評価)
@@ -108,34 +107,34 @@ export function calcPitcher() {
 
     const bar = document.getElementById('diff_bar');
     const bdg = document.getElementById('diff_badge');
-    if(bar && bdg){
-        let w = Math.min(Math.abs(diff) * 50, 50); 
+    if (bar && bdg) {
+        let w = Math.min(Math.abs(diff) * 50, 50);
         let l = diff > 0 ? 50 : 50 - w;
         bar.style.left = l + '%'; bar.style.width = w + '%';
-        
-        if (diff > 0.8) { 
-            bar.className = 'absolute h-2 rounded-full top-1/2 -translate-y-1/2 bg-red-600 shadow-sm'; 
-            bdg.innerText = "VERY UNLUCKY"; 
+
+        if (diff > 0.8) {
+            bar.className = 'absolute h-2 rounded-full top-1/2 -translate-y-1/2 bg-red-600 shadow-sm';
+            bdg.innerText = "VERY UNLUCKY";
             bdg.className = "px-3 py-1 rounded-full text-[10px] font-bold bg-red-100 text-red-700 border border-red-200";
-        } else if (diff > 0.2) { 
-            bar.className = 'absolute h-2 rounded-full top-1/2 -translate-y-1/2 bg-red-400'; 
-            bdg.innerText = "UNLUCKY"; 
+        } else if (diff > 0.2) {
+            bar.className = 'absolute h-2 rounded-full top-1/2 -translate-y-1/2 bg-red-400';
+            bdg.innerText = "UNLUCKY";
             bdg.className = "px-3 py-1 rounded-full text-[10px] font-bold bg-red-50 text-red-600 border border-red-100";
-        } else if (diff < -0.8) { 
-            bar.className = 'absolute h-2 rounded-full top-1/2 -translate-y-1/2 bg-blue-600 shadow-sm'; 
-            bdg.innerText = "VERY LUCKY"; 
+        } else if (diff < -0.8) {
+            bar.className = 'absolute h-2 rounded-full top-1/2 -translate-y-1/2 bg-blue-600 shadow-sm';
+            bdg.innerText = "VERY LUCKY";
             bdg.className = "px-3 py-1 rounded-full text-[10px] font-bold bg-blue-100 text-blue-700 border border-blue-200";
-        } else if (diff < -0.2) { 
-            bar.className = 'absolute h-2 rounded-full top-1/2 -translate-y-1/2 bg-blue-400'; 
-            bdg.innerText = "LUCKY"; 
+        } else if (diff < -0.2) {
+            bar.className = 'absolute h-2 rounded-full top-1/2 -translate-y-1/2 bg-blue-400';
+            bdg.innerText = "LUCKY";
             bdg.className = "px-3 py-1 rounded-full text-[10px] font-bold bg-blue-50 text-blue-600 border border-blue-100";
-        } else { 
-            bar.className = 'hidden'; 
+        } else {
+            bar.className = 'hidden';
             bdg.innerText = "NEUTRAL";
             bdg.className = "px-3 py-1 rounded-full text-[10px] font-bold bg-slate-100 text-slate-500 border border-slate-200";
         }
     }
-    
+
     updatePitcherTypeBadges({ fip, k9, bb9, whip, lob, kbb: bb > 0 ? k / bb : 0 });
 
     if (typeof window.calcPrediction === 'function') window.calcPrediction();
@@ -144,7 +143,7 @@ export function calcPitcher() {
 function updatePitcherTypeBadges(stats) {
     const container = document.getElementById('pitcher_types');
     if (!container) return;
-    
+
     container.innerHTML = '';
     const badges = [];
 
@@ -154,7 +153,7 @@ function updatePitcherTypeBadges(stats) {
 
     if (stats.fip <= 2.00) add('神の領域', 'yellow', 'fa-crown');
     else if (stats.fip <= 2.80) add('エース級', 'orange', 'fa-medal');
-    
+
     if (stats.k9 >= 10.0) {
         add('ドクターK', 'red', 'fa-fire');
     } else if (stats.k9 >= 8.5) {

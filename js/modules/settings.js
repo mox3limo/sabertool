@@ -19,17 +19,16 @@ export function getWeights() {
 
 // 係数を保存して再計算
 export function saveWeights(newWeights) {
-    // 数値型であることを保証しつつマージ
-    currentWeights = { 
-        ...DEFAULT_WEIGHTS, 
+    currentWeights = {
+        ...DEFAULT_WEIGHTS,
         ...Object.keys(newWeights).reduce((acc, key) => {
             acc[key] = parseFloat(newWeights[key]) || DEFAULT_WEIGHTS[key];
             return acc;
         }, {})
     };
-    
+
     localStorage.setItem('sabermetrics_weights', JSON.stringify(currentWeights));
-    
+
     // 再計算トリガー
     calcBatter();
 }

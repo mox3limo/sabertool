@@ -177,7 +177,7 @@ export function calcBatter() {
         // 色変更ロジックが必要ならここに記述
     }
 
-    // ▼▼▼ 修正: リーグ平均値の表示更新 (計算機能付き) ▼▼▼
+    // リーグ平均値の表示更新 (計算機能付き)
     const currentLg = (state && state.currentLeague) ? state.currentLeague : 'Central';
     const lgDB = DB[currentLg] || DB['Central'];
     const lgData = lgDB ? lgDB.bat : {};
@@ -230,8 +230,6 @@ export function calcBatter() {
     // wRC+の平均は定義上常に100
     const avgWrcEl = document.getElementById('avg_wrc_plus');
     if (avgWrcEl) avgWrcEl.innerText = 'リーグ平均=100';
-
-    // ▲▲▲ 修正ここまで ▲▲▲
 
 
     // グラフ更新など

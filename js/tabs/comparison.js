@@ -28,7 +28,6 @@ export function initComparisonChart() {
 
         const currentLg = (state && typeof state.currentLeague === 'string') ? state.currentLeague : 'Central';
 
-        // ★追加: ラベル更新
         updateChartLabel(currentLg);
 
         const lgDB = DB[currentLg] || DB['Central'];
@@ -196,7 +195,6 @@ export function findSimilarPlayer() {
         if (typeof drawRadar === 'function') {
             const currentLg = (state && typeof state.currentLeague === 'string') ? state.currentLeague : 'Central';
 
-            // ★追加: ラベル更新
             updateChartLabel(currentLg);
 
             const lgDB = DB[currentLg] || DB['Central'];
@@ -226,7 +224,6 @@ export function selectSimilar(idx) {
         if (typeof drawRadar === 'function') {
             const currentLg = (state && typeof state.currentLeague === 'string') ? state.currentLeague : 'Central';
 
-            // ★追加: ラベル更新
             updateChartLabel(currentLg);
 
             const lgDB = DB[currentLg] || DB['Central'];
@@ -236,35 +233,30 @@ export function selectSimilar(idx) {
     } catch (e) { console.error(e); }
 }
 
-// ★修正: 詳細モーダル（フルスペック表示）
+// 詳細モーダル表示
 export function openPlayerDetailModal(idx) {
     const match = window.lastSimMatches && window.lastSimMatches[idx];
     if (!match) return;
     const p = match.player;
     const mode = window.lastSimMode || window.currentCompMode || 'batter';
 
-    // 1. モーダルを表示
     const modal = document.getElementById('player_detail_modal');
     modal.classList.remove('hidden');
 
-    // 2. モーダル幅を少し広げる (max-w-sm -> max-w-md)
     const modalInner = modal.firstElementChild;
     if (modalInner) {
         modalInner.classList.remove('max-w-sm');
-        modalInner.classList.add('max-w-md'); // 横幅を拡張
+        modalInner.classList.add('max-w-md');
     }
 
-    // 3. 基本情報セット
     document.getElementById('pd_name').innerText = p.name || 'Unknown';
     document.getElementById('pd_team').innerText = p.team || '所属なし';
     document.getElementById('pd_type').innerText = p.type || (mode === 'batter' ? '打者' : '投手');
 
-    // 4. コンテナ初期化 & グリッド設定
     const container = document.getElementById('pd_stats_container');
     container.innerHTML = '';
     container.className = "grid grid-cols-2 md:grid-cols-3 gap-3 text-center";
 
-    // データ生成ヘルパー
     const createItem = (label, val, unit = '', subLabel = '') => `
         <div class="p-2 bg-white rounded-lg shadow-sm border border-slate-100 flex flex-col items-center justify-center">
             <div class="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1">${label}</div>
@@ -275,42 +267,33 @@ export function openPlayerDetailModal(idx) {
     let html = '';
 
     if (mode === 'batter') {
-        // --- 打者 (10項目) ---
-        // 1行目: 実数系
         html += createItem('打席', p.pa !== undefined ? p.pa : '---');
         html += createItem('本塁打', p.hr !== undefined ? p.hr : '---', '本');
         html += createItem('三振', p.k !== undefined ? p.k : '---', '');
 
-        // 2行目: メジャー指標
         html += createItem('打率', p.avg ? p.avg.toFixed(3).replace(/^0\./, '.') : '---');
         html += createItem('OPS', p.ops ? p.ops.toFixed(3) : '---');
         html += createItem('BB/K', p.bbk ? p.bbk.toFixed(2) : '---', '', '選球バランス');
 
-        // 3行目: 詳細指標
         html += createItem('出塁率', p.obp ? p.obp.toFixed(3).replace(/^0\./, '.') : '---');
         html += createItem('長打率', p.slg ? p.slg.toFixed(3).replace(/^0\./, '.') : '---');
         html += createItem('ISO', (p.slg && p.avg) ? (p.slg - p.avg).toFixed(3).replace(/^0\./, '.') : '---', '', '純長打力');
 
-        // 4行目(1つ): IsoD
         html += createItem('IsoD', (p.obp && p.avg) ? (p.obp - p.avg).toFixed(3).replace(/^0\./, '.') : '---', '', '純選球眼');
 
     } else {
-        // --- 投手 (9項目) ---
-        // 1行目: 実数系
-        html += createItem('投球回', p.ip !== undefined ? p.ip.toFixed(1) : '---'); // .1, .2 はそのまま
+        html += createItem('投球回', p.ip !== undefined ? p.ip.toFixed(1) : '---');
         html += createItem('勝利', p.w !== undefined ? p.w : '---', '勝');
         html += createItem('奪三振', p.k !== undefined ? p.k : '---', '個');
 
-        // 2行目: メジャー指標
         html += createItem('防御率', p.era ? p.era.toFixed(2) : '---');
         html += createItem('FIP', p.fip ? p.fip.toFixed(2) : '---');
-        // K/BB (計算値 or データ)
+
         let kbbStr = '---';
         if (p.kbb) kbbStr = p.kbb.toFixed(2);
         else if (p.k9 && p.bb9 && p.bb9 > 0) kbbStr = (p.k9 / p.bb9).toFixed(2);
         html += createItem('K/BB', kbbStr, '', '制球力');
 
-        // 3行目: 詳細指標
         html += createItem('WHIP', p.whip ? p.whip.toFixed(2) : '---');
         html += createItem('K/9', p.k9 ? p.k9.toFixed(1) : '---', '', '奪三振率');
         html += createItem('BB/9', p.bb9 ? p.bb9.toFixed(1) : '---', '', '与四球率');

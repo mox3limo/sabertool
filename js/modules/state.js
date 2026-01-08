@@ -7,15 +7,14 @@ export const state = {
 
 // リーグを設定する関数
 export function setLeague(lg) {
-    // ★追加: 安全装置 (lgが文字列でなければ強制的にCentralにする)
-    // これにより、過去のバグで保存された不正データを無効化します
+    // 安全装置: 不正な値が来た場合はCentralにリセット
     if (typeof lg !== 'string' || (lg !== 'Central' && lg !== 'Pacific')) {
         console.warn('Invalid league data detected, resetting to Central:', lg);
         lg = 'Central';
     }
 
     state.currentLeague = lg;
-    
+
     // UIの更新
     const btnCl = document.getElementById('btn_league_cl');
     const btnPl = document.getElementById('btn_league_pl');

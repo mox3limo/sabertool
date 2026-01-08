@@ -9,7 +9,7 @@ export function switchTab(tabId, btnElement) {
         const el = document.getElementById(id + '-section');
         if (el) {
             el.classList.add('hidden');
-            el.classList.remove('fade-in'); 
+            el.classList.remove('fade-in');
         }
     });
 
@@ -23,11 +23,11 @@ export function switchTab(tabId, btnElement) {
     document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
     if (btnElement) btnElement.classList.add('active');
 
-    // 4. 各タブ固有の処理（エラーが起きても画面表示は維持する）
+    // 4. 各タブ固有の処理
     try {
         if (tabId === 'team' && typeof window.calcTeam === 'function') window.calcTeam();
         if (tabId === 'prediction' && typeof window.calcPrediction === 'function') window.calcPrediction();
-        
+
         // 比較タブのチャート初期化
         if (tabId === 'comparison') {
             if (!window.myChart && typeof window.initComparisonChart === 'function') {
@@ -45,14 +45,14 @@ export function switchTab(tabId, btnElement) {
 export function toggleDarkMode() {
     document.body.classList.toggle('dark');
     const isDark = document.body.classList.contains('dark');
-    
+
     const btn = document.getElementById('dark_mode_btn');
     if (btn) {
-        btn.innerHTML = isDark 
-            ? '<i class="fa-solid fa-sun text-yellow-400"></i>' 
+        btn.innerHTML = isDark
+            ? '<i class="fa-solid fa-sun text-yellow-400"></i>'
             : '<i class="fa-solid fa-moon text-slate-400"></i>';
     }
-    
+
     localStorage.setItem('sabermetrics_dark_mode', isDark ? 'on' : 'off');
     updateChartTheme(isDark);
 }
@@ -62,15 +62,13 @@ export function togglePanel(id, btn) {
     const el = document.getElementById(id);
     if (!el) return;
 
-    // 表示切り替え
     el.classList.toggle('hidden');
-    
-    // アイコンの向きを反転させる演出
+
     const icon = btn.querySelector('i.fa-chevron-up, i.fa-chevron-down');
     if (icon) {
         if (el.classList.contains('hidden')) {
             icon.classList.replace('fa-chevron-up', 'fa-chevron-down');
-            btn.classList.add('bg-slate-200'); // 閉じている時は少し色を濃く
+            btn.classList.add('bg-slate-200');
         } else {
             icon.classList.replace('fa-chevron-down', 'fa-chevron-up');
             btn.classList.remove('bg-slate-200');

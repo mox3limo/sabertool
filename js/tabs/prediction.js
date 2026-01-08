@@ -4,9 +4,7 @@ import { PLAYERS, DB } from '../core/data.js';
 // シーズン予測モードの状態管理
 let seasonMode = 'batter';
 
-/**
- * 打者/投手モードの切り替え
- */
+// 打者/投手モードの切り替え
 export function toggleSeasonMode(mode) {
     seasonMode = mode;
     const btnBat = document.getElementById('btn_season_bat');
@@ -14,7 +12,6 @@ export function toggleSeasonMode(mode) {
     const divBat = document.getElementById('season_res_bat');
     const divPit = document.getElementById('season_res_pit');
 
-    // ボタンの見た目と表示エリアの切り替え
     if (mode === 'batter') {
         if (btnBat) btnBat.className = "flex-1 py-1 text-xs font-bold rounded bg-white shadow-sm text-indigo-600 transition";
         if (btnPit) btnPit.className = "flex-1 py-1 text-xs font-bold rounded text-slate-400 transition";
@@ -27,18 +24,12 @@ export function toggleSeasonMode(mode) {
         if (divBat) divBat.classList.add('hidden');
     }
 
-    // モード切替時に再計算
     calcPrediction();
 }
 
-/**
- * 予測計算のメイン関数
- * 1. 来季成績予測 (簡易版)
- * 2. シーズン終了時予測 (Pace)
- */
+// 予測計算のメイン関数
 export function calcPrediction() {
     try {
-        // --- ヘルパー関数: IDから数値を取得 ---
         const getVal = (id) => {
             const el = document.getElementById(id);
             return el ? parseFloat(el.value) || 0 : 0;
@@ -46,28 +37,23 @@ export function calcPrediction() {
         const getTextNum = (id) => {
             const el = document.getElementById(id);
             if (!el) return 0;
-            // ".300" などの文字列を数値に変換
             return parseFloat(el.innerText) || 0;
         };
 
         // ==========================================
         // 1. 来季成績予測 (簡易版) - BABIP/FIP回帰
         // ==========================================
-        // 現在の指標を取得（別タブの計算結果を利用）
-        const currentBabip = getTextNum('res_babip'); // 打者BABIP
-        const currentAvg = getTextNum('res_avg');     // 打率
-        const currentFip = getTextNum('res_fip');     // FIP
-        const currentEra = getTextNum('res_era');     // 防御率
+        const currentBabip = getTextNum('res_babip');
+        const currentAvg = getTextNum('res_avg');
+        const currentFip = getTextNum('res_fip');
+        const currentEra = getTextNum('res_era');
 
-        // 予測ロジック
         // 来季打率 = (BABIP - .300)*0.5 + 現在打率 （BABIPが運の要素として平均に回帰すると仮定）
-        // 実際はもっと複雑ですが、簡易版として
         const nextAvg = ((currentBabip - 0.300) * 0.5) + currentAvg;
 
-        // 来季防御率 = (FIP + ERA) / 2 （FIPとERAの中間あたりに落ち着くと仮定）
+        // 来季防御率 = (FIP + ERA) / 2
         const nextEra = (currentFip + currentEra) / 2;
 
-        // 表示更新
         const elNextAvg = document.getElementById('next_avg');
         const elNextEra = document.getElementById('next_era');
         const elCurrBabip = document.getElementById('curr_babip');
@@ -77,14 +63,13 @@ export function calcPrediction() {
         if (elNextEra) elNextEra.innerText = nextEra.toFixed(2);
         if (elCurrBabip) elCurrBabip.innerText = currentBabip.toFixed(3).replace(/^0\./, '.');
 
-        // Luck判定 (BABIP基準)
+        // Luck判定
         if (elLuck) {
             if (seasonMode === 'batter') {
                 if (currentBabip > 0.330) elLuck.innerText = "幸運 (Lucky)";
                 else if (currentBabip < 0.270) elLuck.innerText = "不運 (Unlucky)";
                 else elLuck.innerText = "平均的 (Neutral)";
             } else {
-                // 投手の場合は被BABIPを見るべきだが、簡易的にERA-FIP差で判定
                 const diff = currentEra - currentFip;
                 if (diff < -0.5) elLuck.innerText = "幸運 (ERA<FIP)";
                 else if (diff > 0.5) elLuck.innerText = "不運 (ERA>FIP)";
@@ -92,32 +77,25 @@ export function calcPrediction() {
             }
         }
 
-
         // ==========================================
         // 2. シーズン終了時予測 (Pace)
         // ==========================================
-        const gamesPlayed = getVal('pred_played'); // 消化試合数
-        const totalGames = getVal('pred_total');   // 全試合数 (例: 143)
+        const gamesPlayed = getVal('pred_played');
+        const totalGames = getVal('pred_total');
 
-        // ゼロ除算回避
         if (gamesPlayed <= 0) return;
 
-        // ペース倍率 (残り試合も含めた最終着地倍率)
         const paceMultiplier = totalGames / gamesPlayed;
 
         if (seasonMode === 'batter') {
-            // --- 打者ペース計算 ---
-            // 入力タブから現在値を取得
-            const curH = getVal('b_h');    // 安打
-            const curHR = getVal('b_hr');  // 本塁打
-            const curWRAA = getTextNum('res_wraa'); // wRAA (計算結果テキストから取得)
+            const curH = getVal('b_h');
+            const curHR = getVal('b_hr');
+            const curWRAA = getTextNum('res_wraa');
 
-            // 最終予測値
             const projH = Math.round(curH * paceMultiplier);
             const projHR = Math.round(curHR * paceMultiplier);
             const projWRAA = (curWRAA * paceMultiplier).toFixed(1);
 
-            // 表示
             const elProjH = document.getElementById('proj_h');
             const elProjHR = document.getElementById('proj_hr');
             const elProjWRAA = document.getElementById('proj_wraa');
@@ -127,17 +105,13 @@ export function calcPrediction() {
             if (elProjWRAA) elProjWRAA.innerText = projWRAA;
 
         } else {
-            // --- 投手ペース計算 ---
-            const curWin = getVal('p_w'); // 勝利
-            const curK = getVal('p_k');   // 奪三振
-            // 防御率は積み上げではないので、現状維持とみなす
+            const curWin = getVal('p_w');
+            const curK = getVal('p_k');
             const curEra = getTextNum('res_era');
 
-            // 最終予測値
             const projWin = Math.round(curWin * paceMultiplier);
             const projK = Math.round(curK * paceMultiplier);
 
-            // 表示
             const elProjWin = document.getElementById('proj_win');
             const elProjK = document.getElementById('proj_k');
             const elProjEra = document.getElementById('proj_final_era');
@@ -147,7 +121,6 @@ export function calcPrediction() {
             if (elProjEra) elProjEra.innerText = curEra.toFixed(2);
         }
 
-        // 最後に通算記録予測も更新（ペースが変わるため）
         calcCareer();
 
     } catch (e) {
@@ -155,21 +128,16 @@ export function calcPrediction() {
     }
 }
 
-/**
- * 通算記録 到達予測シミュレーション
- */
+// 通算記録 到達予測シミュレーション
 export function calcCareer() {
     try {
         const getVal = (id) => { const el = document.getElementById(id); return el ? parseFloat(el.value) || 0 : 0; };
 
-        // 入力値
         const currentAge = getVal('career_age');
-        const careerH = getVal('career_h'); // 現在の通算安打
-        const careerW = getVal('career_w'); // 現在の通算勝利
-        const paceType = parseFloat(document.getElementById('career_pace_type').value) || 1.0; // 減衰率
+        const careerH = getVal('career_h');
+        const careerW = getVal('career_w');
+        const paceType = parseFloat(document.getElementById('career_pace_type').value) || 1.0;
 
-        // 今季の予測最終成績を取得（これを「1年分の能力」とする）
-        // ※まだ計算されていない場合やDOMが見つからない場合のガード
         let paceH = 0;
         let paceW = 0;
 
@@ -177,9 +145,8 @@ export function calcCareer() {
         const elProjW = document.getElementById('proj_win');
 
         if (elProjH && elProjH.innerText !== '--') {
-            paceH = parseFloat(elProjH.innerText); // "150 本" -> 150
+            paceH = parseFloat(elProjH.innerText);
         } else {
-            // 予測が出てない場合は入力値から簡易計算
             paceH = getVal('b_h') * (143 / (getVal('pred_played') || 1));
         }
 
@@ -189,7 +156,7 @@ export function calcCareer() {
             paceW = getVal('p_w') * (143 / (getVal('pred_played') || 1));
         }
 
-        // --- 2000本安打予測 ---
+        // 2000本安打予測
         const targetH = 2000;
         let remH = targetH - careerH;
         const elPred2000H = document.getElementById('pred_2000h');
@@ -200,20 +167,17 @@ export function calcCareer() {
         if (remH <= 0) {
             if (elPred2000H) elPred2000H.innerText = "達成済";
         } else if (paceH <= 5) {
-            // ペースがあまりに遅い場合
             if (elPred2000H) elPred2000H.innerText = "---";
         } else {
-            // シミュレーション
             let simAge = currentAge;
             let currentPace = paceH;
             let years = 0;
 
-            // 最大20年後まで計算
             while (remH > 0 && years < 20) {
                 remH -= currentPace;
                 years++;
                 simAge++;
-                currentPace *= paceType; // 年々衰える
+                currentPace *= paceType;
             }
 
             if (remH <= 0) {
@@ -223,7 +187,7 @@ export function calcCareer() {
             }
         }
 
-        // --- 200勝予測 ---
+        // 200勝予測
         const targetW = 200;
         let remW = targetW - careerW;
         const elPred200W = document.getElementById('pred_200w');
@@ -259,8 +223,9 @@ export function calcCareer() {
     }
 }
 
-// ▼▼▼ 勝利確率シミュレーター (Win Probability) ▼▼▼
-// ※ここは以前のコードと同じですが、ファイルを上書きするため含めておきます
+// ==========================================
+// 勝利確率シミュレーター (Win Probability)
+// ==========================================
 
 let wpIsTop = false;
 
@@ -269,7 +234,6 @@ export function selectTopBottom(type) {
     const btnTop = document.getElementById('btn_top');
     const btnBot = document.getElementById('btn_bot');
 
-    // スタイル定義
     const activeBtn = "flex-1 rounded text-xs font-bold bg-white shadow-sm text-slate-700 transition border border-slate-200";
     const inactiveBtn = "flex-1 rounded text-xs font-bold text-slate-400 transition hover:bg-slate-50";
 
@@ -278,7 +242,7 @@ export function selectTopBottom(type) {
         if (btnTop) btnTop.className = activeBtn;
         if (btnBot) btnBot.className = inactiveBtn;
     } else {
-        wpIsTop = false; // 裏
+        wpIsTop = false;
         if (btnBot) btnBot.className = activeBtn;
         if (btnTop) btnTop.className = inactiveBtn;
     }
@@ -296,7 +260,6 @@ export function calcWinProb() {
     const r2 = document.getElementById('runner_2').checked;
     const r3 = document.getElementById('runner_3').checked;
 
-    // チームタブ連携
     const getTeamBatterStats = (orderIndex) => {
         const tbody = document.getElementById('lineup_tbody');
         if (!tbody) return null;
@@ -429,7 +392,6 @@ export function calcWinProb() {
 
     const winRate = ((winCount + tieCount * 0.5) / SIM_COUNT * 100);
 
-    // UI更新
     const resEl = document.getElementById('wp_result');
     const txtEl = document.getElementById('wp_text');
     const advEl = document.getElementById('wp_advantage');
@@ -468,10 +430,7 @@ export function calcWinProb() {
 export function toggleRunner(base) {
     const cb = document.getElementById(`runner_${base}`);
     if (cb) {
-        // チェック状態を反転
         cb.checked = !cb.checked;
-
-        // 即座に勝率を再計算
         calcWinProb();
     }
 }

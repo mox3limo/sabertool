@@ -2,7 +2,7 @@
 import { getVal } from '../core/utils.js';
 import { getWeights, saveWeights, resetWeights } from '../modules/settings.js';
 
-// --- FIP定数計算（既存機能） ---
+// --- FIP定数計算 ---
 export function calcConstant() {
     const era = getVal('l_era');
     const ip = getVal('l_ip');
@@ -21,10 +21,10 @@ export function calcConstant() {
     if (resEl) resEl.innerText = constant.toFixed(3);
 }
 
-export function applyConstant() { 
+export function applyConstant() {
     const resEl = document.getElementById('res_const');
     const targetEl = document.getElementById('p_const');
-    
+
     if (resEl && targetEl) {
         targetEl.value = resEl.innerText;
         if (typeof window.switchTab === 'function') {
@@ -39,13 +39,13 @@ export function applyConstant() {
     }
 }
 
-// --- ★追加: 係数設定UIの操作 ---
+// --- 係数設定UIの操作 ---
 
 // 画面に現在の設定値を反映
 export function loadSettingsToUI() {
     const w = getWeights();
-    const set = (id, v) => { const el = document.getElementById(id); if(el) el.value = v; };
-    
+    const set = (id, v) => { const el = document.getElementById(id); if (el) el.value = v; };
+
     set('set_wbb', w.wbb);
     set('set_whbp', w.whbp);
     set('set_w1b', w.w1b);
@@ -67,12 +67,12 @@ export function applySettingsFromUI() {
         whr: get('set_whr'),
         woba_scale: get('set_scale')
     };
-    
+
     saveWeights(newWeights);
-    
+
     // 保存ボタンの演出
     const btn = document.getElementById('btn_save_weights');
-    if(btn) {
+    if (btn) {
         const originalText = btn.innerHTML;
         btn.innerHTML = '<i class="fa-solid fa-check mr-1"></i>保存完了';
         btn.classList.add('bg-green-600');
@@ -85,21 +85,20 @@ export function applySettingsFromUI() {
 
 // 初期値リセット
 export function resetSettingsUI() {
-    if(!confirm('係数をすべて初期値に戻しますか？')) return;
+    if (!confirm('係数をすべて初期値に戻しますか？')) return;
     resetWeights();
-    loadSettingsToUI(); // 画面も戻す
+    loadSettingsToUI();
     alert('初期値に戻しました。');
 }
 
 // 初期化処理
 export function initTools() {
     const ids = ['l_era', 'l_ip', 'l_hr', 'l_bb', 'l_hbp', 'l_k'];
-    ids.forEach(function(id) {
+    ids.forEach(function (id) {
         const el = document.getElementById(id);
         if (el) el.addEventListener('input', calcConstant);
     });
     calcConstant();
-    
-    // ★設定UIの初期表示
+
     loadSettingsToUI();
 }

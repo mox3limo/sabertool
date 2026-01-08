@@ -1,8 +1,6 @@
 /* js/core/utils.js */
 
-// ==========================================
 // 数値変換・入力取得
-// ==========================================
 
 export function toNumberInput(v) {
     if (v === null || v === undefined) return 0;
@@ -15,16 +13,16 @@ export function toNumberInput(v) {
 
 export function maybeNumber(v) {
     if (v === null || v === undefined) return v;
-    const n = parseFloat(String(v).replace(/[^0-9\.\-]/g,''));
-    return (String(v).trim()!=='' && !isNaN(n)) ? n : String(v).trim();
+    const n = parseFloat(String(v).replace(/[^0-9\.\-]/g, ''));
+    return (String(v).trim() !== '' && !isNaN(n)) ? n : String(v).trim();
 }
 
-export function getVal(id) { 
-    const el = document.getElementById(id); 
-    return el ? Math.max(0, toNumberInput(el.value)) : 0; 
+export function getVal(id) {
+    const el = document.getElementById(id);
+    return el ? Math.max(0, toNumberInput(el.value)) : 0;
 }
 
-// ★追加: 入力欄に値をセットする関数 (スマート入力機能などで使用)
+// 入力欄に値をセットする関数 (スマート入力機能などで使用)
 export function setVal(id, val) {
     const el = document.getElementById(id);
     if (el) {
@@ -36,14 +34,14 @@ export function setVal(id, val) {
 // 表示更新・フォーマット
 // ==========================================
 
-export function setTxt(id, v, m='std') { 
-    const el = document.getElementById(id); if(!el) return; 
-    if(typeof v === 'string') { el.innerText = v; return; }
-    if(typeof v!=='number'||!isFinite(v)){ el.innerText="---"; return; }
-    
+export function setTxt(id, v, m = 'std') {
+    const el = document.getElementById(id); if (!el) return;
+    if (typeof v === 'string') { el.innerText = v; return; }
+    if (typeof v !== 'number' || !isFinite(v)) { el.innerText = "---"; return; }
+
     if (m === 'rate') {
         // 率 (打率など): .300
-        el.innerText = v.toFixed(3).replace(/^0\./, '.'); 
+        el.innerText = v.toFixed(3).replace(/^0\./, '.');
     } else if (m === 'pct') {
         // パーセント: 12.3%
         el.innerText = (v * 100).toFixed(1) + '%';
@@ -64,11 +62,11 @@ export function parseIP(v) {
     // "100 1/3" 形式への対応
     if (typeof v === 'string' && /\d+\s*[+ ]?\s*1\/3/.test(v)) {
         const num = parseInt(v.match(/\d+/)[0], 10);
-        return isNaN(num) ? 0 : num + 1/3;
+        return isNaN(num) ? 0 : num + 1 / 3;
     }
     if (typeof v === 'string' && /\d+\s*[+ ]?\s*2\/3/.test(v)) {
         const num = parseInt(v.match(/\d+/)[0], 10);
-        return isNaN(num) ? 0 : num + 2/3;
+        return isNaN(num) ? 0 : num + 2 / 3;
     }
 
     // 通常の数値パース
@@ -76,16 +74,16 @@ export function parseIP(v) {
     if (!isFinite(n) || n <= 0) return 0;
     const intPart = Math.floor(n);
     const decimal = Math.round((n - intPart) * 10);
-    
+
     // .1 -> 1/3, .2 -> 2/3 の変換
-    if (decimal === 1) return intPart + 1/3;
-    if (decimal === 2) return intPart + 2/3;
-    
+    if (decimal === 1) return intPart + 1 / 3;
+    if (decimal === 2) return intPart + 2 / 3;
+
     // 小数点以下が微妙な場合の補正
     const frac = n - intPart;
-    if (frac > 0.2 && frac < 0.5) return intPart + 1/3;
-    if (frac >= 0.5 && frac < 0.85) return intPart + 2/3;
-    
+    if (frac > 0.2 && frac < 0.5) return intPart + 1 / 3;
+    if (frac >= 0.5 && frac < 0.85) return intPart + 2 / 3;
+
     return intPart;
 }
 
@@ -94,16 +92,16 @@ export function parseIP(v) {
 // ==========================================
 
 // HTMLエスケープ (XSS対策)
-export function escapeHtml(s) { 
+export function escapeHtml(s) {
     if (!s) return '';
-    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); 
+    return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
 
 // バリデーション・エラー表示
 export function showError(message) {
     const alert = document.getElementById('error_alert') || document.getElementById('error_container'); // ID揺れに対応
     const msgEl = document.getElementById('error_message') || document.getElementById('error_msg');
-    
+
     if (alert && msgEl) {
         msgEl.innerText = message;
         alert.classList.remove('hidden');
@@ -111,7 +109,6 @@ export function showError(message) {
     } else {
         // 万が一HTML側に要素がない場合のアラート
         console.warn('Error UI elements not found:', message);
-        // alert(message); // 邪魔になるならコメントアウト
     }
 }
 
@@ -138,7 +135,7 @@ export function clearAllErrors() {
 // デバウンス関数（連続入力時の処理遅延）
 export function debounce(fn, wait) {
     let t = null;
-    return function(...args) {
+    return function (...args) {
         clearTimeout(t);
         t = setTimeout(() => fn.apply(this, args), wait);
     };

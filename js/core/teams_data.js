@@ -5,16 +5,15 @@ export const TEAM_PRESETS = {
     "tigers": {
         name: "阪神タイガース",
         players: [
-            // 2025年: 佐藤輝明が40本塁打・102打点で二冠、近本が盗塁王
-            { name: "近本 光司", obp: 0.348, slg: 0.353 }, 
+            { name: "近本 光司", obp: 0.348, slg: 0.353 },
             { name: "中野 拓夢", obp: 0.339, slg: 0.328 },
             { name: "森下 翔太", obp: 0.350, slg: 0.463 },
-            { name: "佐藤 輝明", obp: 0.345, slg: 0.579 }, 
-            { name: "大山 悠輔", obp: 0.363, slg: 0.396 }, 
+            { name: "佐藤 輝明", obp: 0.345, slg: 0.579 },
+            { name: "大山 悠輔", obp: 0.363, slg: 0.396 },
             { name: "前川 右京", obp: 0.297, slg: 0.323 },
             { name: "坂本 誠志郎", obp: 0.357, slg: 0.326 },
             { name: "小幡 竜平", obp: 0.272, slg: 0.309 },
-            { name: "投手", obp: 0.100, slg: 0.040 } 
+            { name: "投手", obp: 0.100, slg: 0.040 }
         ]
     },
     "baystars": {
@@ -34,23 +33,21 @@ export const TEAM_PRESETS = {
     "giants": {
         name: "読売ジャイアンツ",
         players: [
-            // 2025年: 甲斐・R.マルティネスらが加入した大型補強打線
             { name: "丸 佳浩", obp: 0.345, slg: 0.399 },
             { name: "キャベッジ", obp: 0.331, slg: 0.450 },
             { name: "泉口 友汰", obp: 0.362, slg: 0.393 },
             { name: "岡本 和真", obp: 0.416, slg: 0.598 },
             { name: "岸田 行倫", obp: 0.355, slg: 0.417 },
-            { name: "中山 礼都", obp: 0.319, slg: 0.282 }, 
-            { name: "リチャード", obp: 0.269, slg: 0.384 }, 
+            { name: "中山 礼都", obp: 0.319, slg: 0.282 },
+            { name: "リチャード", obp: 0.269, slg: 0.384 },
             { name: "吉川 尚輝", obp: 0.349, slg: 0.351 },
-            { name: "投手", obp: 0.100, slg: 0.040 } 
+            { name: "投手", obp: 0.100, slg: 0.040 }
         ]
     },
     "dragons": {
         name: "中日ドラゴンズ",
         players: [
-            // 岡林が最多安打(168)
-            { name: "岡林 勇希", obp: 0.348, slg: 0.382 }, 
+            { name: "岡林 勇希", obp: 0.348, slg: 0.382 },
             { name: "田中 幹也", obp: 0.324, slg: 0.327 },
             { name: "上林 誠知", obp: 0.302, slg: 0.434 },
             { name: "細川 成也", obp: 0.367, slg: 0.489 },
@@ -64,11 +61,10 @@ export const TEAM_PRESETS = {
     "carp": {
         name: "広島カープ",
         players: [
-            // 小園が首位打者(.309)
             { name: "中村 奨成", obp: 0.321, slg: 0.439 },
             { name: "ファビアン", obp: 0.315, slg: 0.427 },
-            { name: "小園 海斗", obp: 0.365, slg: 0.388 }, 
-            { name: "末包 昇大", obp: 0.296, slg: 0.373 }, 
+            { name: "小園 海斗", obp: 0.365, slg: 0.388 },
+            { name: "末包 昇大", obp: 0.296, slg: 0.373 },
             { name: "坂倉 将吾", obp: 0.327, slg: 0.362 },
             { name: "モンテロ", obp: 0.301, slg: 0.391 },
             { name: "菊池 涼介", obp: 0.28, slg: 0.338 },
@@ -94,26 +90,24 @@ export const TEAM_PRESETS = {
     "hawks": {
         name: "ソフトバンク",
         players: [
-            // 2025年日本一チーム
-            { name: "周東 佑京", obp: 0.357, slg: 0.354 }, 
+            { name: "周東 佑京", obp: 0.357, slg: 0.354 },
             { name: "柳町 達", obp: 0.384, slg: 0.376 },
             { name: "近藤 健介", obp: 0.410, slg: 0.492 },
             { name: "山川 穂高", obp: 0.300, slg: 0.402 },
             { name: "中村 晃", obp: 0.330, slg: 0.313 },
             { name: "栗原 陵矢", obp: 0.356, slg: 0.407 },
             { name: "野村 勇", obp: 0.324, slg: 0.410 },
-            { name: "海野 隆司", obp: 0.253, slg: 0.280 }, 
-            { name: "牧原 大成", obp: 0.317, slg: 0.409 } 
+            { name: "海野 隆司", obp: 0.253, slg: 0.280 },
+            { name: "牧原 大成", obp: 0.317, slg: 0.409 }
         ]
     },
     "fighters": {
         name: "日本ハム",
         players: [
-            // レイエスが本塁打・打点二冠
             { name: "水谷 瞬", obp: 0.322, slg: 0.473 },
             { name: "清宮 幸太郎", obp: 0.329, slg: 0.392 },
             { name: "レイエス", obp: 0.347, slg: 0.515 },
-            { name: "野村 佑希", obp: 0.325, slg: 0.398 }, // 本塁打(32)・打点(90)
+            { name: "野村 佑希", obp: 0.325, slg: 0.398 },
             { name: "郡司 裕也", obp: 0.379, slg: 0.420 },
             { name: "万波 中正", obp: 0.302, slg: 0.431 },
             { name: "石井 一成", obp: 0.306, slg: 0.383 },
@@ -138,14 +132,13 @@ export const TEAM_PRESETS = {
     "eagles": {
         name: "楽天イーグルス",
         players: [
-            // 村林が最多安打(144)
             { name: "中島 大輔", obp: 0.294, slg: 0.351 },
-            { name: "村林 一輝", obp: 0.320, slg: 0.326 }, // 最多安打
+            { name: "村林 一輝", obp: 0.320, slg: 0.326 },
             { name: "黒川 史陽", obp: 0.372, slg: 0.372 },
             { name: "ボイト", obp: 0.384, slg: 0.498 },
             { name: "浅村 栄斗", obp: 0.350, slg: 0.366 },
             { name: "宗山 塁", obp: 0.289, slg: 0.340 },
-            { name: "小郷 裕哉", obp: 0.245, slg: 0.272},
+            { name: "小郷 裕哉", obp: 0.245, slg: 0.272 },
             { name: "堀内 謙伍", obp: 0.323, slg: 0.339 },
             { name: "辰己 涼介", obp: 0.325, slg: 0.441 }
         ]
@@ -153,7 +146,7 @@ export const TEAM_PRESETS = {
     "lions": {
         name: "西武ライオンズ",
         players: [
-            { name: "西川 愛也", obp: 0.318, slg: 0.387 }, // 新人(AS出場)
+            { name: "西川 愛也", obp: 0.318, slg: 0.387 },
             { name: "滝澤 夏央", obp: 0.289, slg: 0.244 },
             { name: "渡部 聖弥", obp: 0.299, slg: 0.395 },
             { name: "ネビン", obp: 0.346, slg: 0.448 },

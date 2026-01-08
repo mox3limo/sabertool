@@ -72,7 +72,7 @@ export function deleteHistory(profileName, idx) {
     const hist = JSON.parse(localStorage.getItem(HISTORY_KEY) || '{}');
     if (!hist[profileName] || !hist[profileName][idx]) return;
     if (!confirm('この履歴を削除しますか？')) return;
-    hist[profileName].splice(idx,1);
+    hist[profileName].splice(idx, 1);
     localStorage.setItem(HISTORY_KEY, JSON.stringify(hist));
     showHistoryModal();
 }
@@ -98,7 +98,7 @@ function getAllInputData() {
 function setAllInputData(data) {
     if (!data) return;
     if (data.league) setLeague(data.league);
-    
+
     Object.keys(INPUT_FIELDS).forEach(section => {
         if (data[section]) {
             INPUT_FIELDS[section].forEach(id => {
@@ -109,12 +109,12 @@ function setAllInputData(data) {
             });
         }
     });
-    
-    if(typeof calcBatter === 'function') calcBatter();
-    if(typeof calcPitcher === 'function') calcPitcher();
-    if(typeof calcTeam === 'function') calcTeam();
-    if(typeof calcPrediction === 'function') calcPrediction();
-    if(typeof calcCareer === 'function') calcCareer();
+
+    if (typeof calcBatter === 'function') calcBatter();
+    if (typeof calcPitcher === 'function') calcPitcher();
+    if (typeof calcTeam === 'function') calcTeam();
+    if (typeof calcPrediction === 'function') calcPrediction();
+    if (typeof calcCareer === 'function') calcCareer();
 }
 
 export function saveToLocalStorage(profileName, data, section) {
@@ -128,11 +128,9 @@ export function saveToLocalStorage(profileName, data, section) {
         } else if (section === 'pitcher') {
             existing.pitcher = data.pitcher || existing.pitcher;
         } else if (section === 'auto') {
-            // ★修正: leagueなどの文字列プロパティは個別に代入し、ループ処理からは除外する
             if (data.league) existing.league = data.league;
 
             Object.keys(data).forEach(sec => {
-                // leagueやschemaVersionなどの文字列/数値はスキップし、オブジェクトのみ処理する
                 if (sec === 'league' || typeof data[sec] !== 'object' || data[sec] === null) return;
 
                 if (!existing[sec]) existing[sec] = {};
@@ -153,12 +151,12 @@ export function saveToLocalStorage(profileName, data, section) {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(profiles));
         localStorage.setItem(CURRENT_PROFILE_KEY, profileName);
         updateProfileSelector();
-        
+
         const status = document.getElementById('autosave_status');
         const retry = document.getElementById('autosave_retry');
         if (status) status.innerText = '保存済み';
         if (retry) retry.classList.add('hidden');
-        try { pushProfileHistory(profileName, existing); } catch(e) {}
+        try { pushProfileHistory(profileName, existing); } catch (e) { }
         return true;
     } catch (e) {
         console.error('Save error:', e);
@@ -222,10 +220,10 @@ function migrateProfile(old) {
 function updateProfileSelector() {
     const selector = document.getElementById('profile_selector');
     if (!selector) return;
-    
+
     const current = localStorage.getItem(CURRENT_PROFILE_KEY) || 'default';
     const profiles = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
-    
+
     selector.innerHTML = '<option value="default">デフォルト</option>';
     Object.keys(profiles).sort().forEach(name => {
         const option = document.createElement('option');
@@ -243,7 +241,7 @@ export function saveProfile() {
     const name = document.getElementById('profile_name_input').value.trim();
     if (!name) { alert('プロファイル名を入力してください'); return; }
     if (name === 'default') { alert('「default」は使用できません'); return; }
-    
+
     const data = getAllInputData();
     let scope = 'all';
     const radios = document.getElementsByName('save_scope');
@@ -268,7 +266,7 @@ export function saveProfile() {
 export function loadProfile() {
     const selector = document.getElementById('profile_selector');
     const profileName = selector.value;
-    
+
     if (profileName === 'default') {
         const defaultData = {
             league: 'Central',
@@ -288,10 +286,10 @@ export function loadProfile() {
 export function deleteCurrentProfile() {
     const selector = document.getElementById('profile_selector');
     const profileName = selector.value;
-    
+
     if (profileName === 'default') { alert('デフォルトプロファイルは削除できません'); return; }
     if (!confirm(`「${profileName}」を削除しますか？`)) return;
-    
+
     try {
         const profiles = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
         delete profiles[profileName];
@@ -300,7 +298,7 @@ export function deleteCurrentProfile() {
             localStorage.removeItem(CURRENT_PROFILE_KEY);
         }
         updateProfileSelector();
-        loadProfile(); 
+        loadProfile();
     } catch (e) {
         alert('削除に失敗しました: ' + e.message);
     }
@@ -317,7 +315,7 @@ export function exportData(format = 'json') {
     const data = getAllInputData();
     const currentProfile = localStorage.getItem(CURRENT_PROFILE_KEY) || 'default';
     const dateStr = new Date().toISOString().split('T')[0];
-    
+
     if (format === 'json') {
         const exportObj = { version: '2.0', exportedAt: new Date().toISOString(), profileName: currentProfile, data: data };
         const json = JSON.stringify(exportObj, null, 2);
@@ -345,7 +343,7 @@ export function exportData(format = 'json') {
         csv += '\n計算結果,項目,値\n';
         csv += '計算結果,OPS,' + getNum('res_ops') + '\n';
         csv += '計算結果,防御率,' + getNum('res_era') + '\n';
-        
+
         const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
@@ -363,7 +361,7 @@ export function copyCurrentProfileToClipboard() {
     const payload = JSON.stringify(getAllInputData());
     if (navigator.clipboard && navigator.clipboard.writeText) {
         navigator.clipboard.writeText(payload).then(() => { alert('クリップボードにコピーしました'); hideExportModal(); })
-        .catch(err => alert('コピーに失敗しました'));
+            .catch(err => alert('コピーに失敗しました'));
     } else {
         alert('このブラウザでは対応していません');
     }
@@ -374,45 +372,33 @@ export function importData(event) {
     if (!file) return;
 
     const reader = new FileReader();
-    
+
     reader.onload = (e) => {
         const text = e.target.result;
 
-        // ★追加: 拡張子で分岐
         if (file.name.toLowerCase().endsWith('.csv')) {
-            // CSVならラインナップ取り込みを実行
             importLineupCSV(text);
         } else {
-            // それ以外(JSON)なら既存のプロファイル読み込み
             try {
                 const data = JSON.parse(text);
-                
-                // 既存の読み込みロジック (loadProfileなど)
-                // ※元のコードに合わせて復元してください。
-                // 通常はここで applyProfile(data) などを呼んでいるはずです。
+
                 if (typeof window.applySafeImport === 'function') {
-                    // もし safeImport のロジックを使うならこちらへ流す手もありますが、
-                    // ここではシンプルに「現在の画面に反映」させます。
-                    // もし元のコードで loadProfile(data) などを呼んでいた場合はそれを記述してください。
-                    
-                    // ※わからなければ、一旦アラートだけ出すか、safeImport用のモーダルを開く形にします
-                    alert('JSONファイルの読み込みは「安全インポート」ボタンから行ってください。'); 
+                    alert('JSONファイルの読み込みは「安全インポート」ボタンから行ってください。');
                 }
             } catch (err) {
                 alert('ファイル形式が正しくありません。\n' + err);
             }
         }
     };
-    
+
     reader.readAsText(file);
-    
-    // 同じファイルを再度選べるようにリセット
+
     event.target.value = '';
 }
 
 export function openSafeImportModal() { const m = document.getElementById('safe_import_modal'); if (!m) return; m.classList.remove('hidden'); document.getElementById('safe_import_text').value = ''; document.getElementById('safe_import_preview').innerHTML = ''; document.getElementById('safe_import_apply_btn').disabled = true; }
 export function closeSafeImportModal() { const m = document.getElementById('safe_import_modal'); if (!m) return; m.classList.add('hidden'); }
-export function safeImportFileChanged(ev) { const f = ev && ev.target && ev.target.files && ev.target.files[0]; if (!f) return; const r = new FileReader(); r.onload = function(e) { document.getElementById('safe_import_text').value = e.target.result; previewSafeImport(); }; r.readAsText(f, 'utf-8'); }
+export function safeImportFileChanged(ev) { const f = ev && ev.target && ev.target.files && ev.target.files[0]; if (!f) return; const r = new FileReader(); r.onload = function (e) { document.getElementById('safe_import_text').value = e.target.result; previewSafeImport(); }; r.readAsText(f, 'utf-8'); }
 export function openSafeImportFromTextArea() { const m = document.getElementById('safe_import_modal'); if (!m) return; m.classList.remove('hidden'); document.getElementById('safe_import_text').focus(); }
 
 export function previewSafeImport() {
@@ -425,27 +411,27 @@ export function previewSafeImport() {
         try {
             const obj = JSON.parse(txt);
             if (Array.isArray(obj)) {
-                previewEl.innerHTML = renderPreviewTable(obj.slice(0,5));
+                previewEl.innerHTML = renderPreviewTable(obj.slice(0, 5));
                 document.getElementById('safe_import_apply_btn').disabled = false;
                 previewEl.dataset.payload = JSON.stringify(obj);
                 return;
             }
         } catch (e) { }
     }
-    const lines = txt.split('\n').map(l=>l.trim()).filter(l=>l.length>0);
+    const lines = txt.split('\n').map(l => l.trim()).filter(l => l.length > 0);
     if (lines.length > 0) {
-        let sep = ','; if (lines[0].indexOf('\t')>=0) sep='\t'; else if (lines[0].indexOf(';')>=0) sep=';';
+        let sep = ','; if (lines[0].indexOf('\t') >= 0) sep = '\t'; else if (lines[0].indexOf(';') >= 0) sep = ';';
         const header = parseCSVLineSimple(lines[0], sep);
         const items = [];
-        for (let i=1;i<lines.length;i++) {
+        for (let i = 1; i < lines.length; i++) {
             const cols = parseCSVLineSimple(lines[i], sep);
             if (cols.length === 0) continue;
             const obj = {};
-            for (let j=0;j<header.length;j++) obj[header[j]] = maybeNumber(cols[j]);
+            for (let j = 0; j < header.length; j++) obj[header[j]] = maybeNumber(cols[j]);
             items.push(obj);
         }
-        if (items.length>0) {
-            previewEl.innerHTML = renderPreviewTable(items.slice(0,5));
+        if (items.length > 0) {
+            previewEl.innerHTML = renderPreviewTable(items.slice(0, 5));
             document.getElementById('safe_import_apply_btn').disabled = false;
             previewEl.dataset.payload = JSON.stringify(items);
             return;
@@ -460,13 +446,11 @@ export function applySafeImport() {
     const payload = previewEl.dataset && previewEl.dataset.payload ? JSON.parse(previewEl.dataset.payload) : null;
     if (!payload || !Array.isArray(payload)) { alert('データがありません'); return; }
     if (!confirm('PLAYERS を上書きしてよいですか？')) return;
-    
-    // PLAYERS は data.js から import されているため、直接代入はできない（const/let の再代入不可の可能性）。
-    // そのため、配列の中身を入れ替える
+
     PLAYERS.length = 0;
     payload.forEach(p => PLAYERS.push(p));
     normalizePlayers(PLAYERS);
-    
+
     alert('インポート完了');
     closeSafeImportModal();
 }
@@ -482,36 +466,32 @@ function escapeHtml(text) {
 }
 
 function renderPreviewTable(items) {
-    if (!items || items.length===0) return '<div>表示するデータがありません</div>';
+    if (!items || items.length === 0) return '<div>表示するデータがありません</div>';
     const keys = Object.keys(items[0]);
     let html = '<table class="w-full text-sm border-collapse">';
-    
-    // ヘッダーもエスケープする
+
     html += '<thead><tr>' + keys.map(k => `<th class="border px-2 py-1 bg-gray-50">${escapeHtml(k)}</th>`).join('') + '</tr></thead>';
-    
-    // 中身も escapeHtml() を通してから表示する
-    html += '<tbody>' + items.map(it => ' <tr>' + keys.map(k => `<td class="border px-2 py-1">${escapeHtml(it[k]!==undefined?it[k]:'')}</td>`).join('') + '</tr>').join('') + '</tbody>';
-    
+    html += '<tbody>' + items.map(it => ' <tr>' + keys.map(k => `<td class="border px-2 py-1">${escapeHtml(it[k] !== undefined ? it[k] : '')}</td>`).join('') + '</tr>').join('') + '</tbody>';
+
     html += '</table>';
     return html;
 }
 
-function parseCSVLineSimple(line, sep=',') {
-    const out = []; let cur=''; let inq=false; 
-    for (let i=0;i<line.length;i++) { 
-        const c=line[i]; 
-        if (c==='"') { if (inq && line[i+1]==='"') { cur+='"'; i++; } else { inq=!inq; } continue; } 
-        if (c===sep && !inq) { out.push(cur); cur=''; continue; } cur+=c; 
-    } 
-    out.push(cur); 
-    return out.map(s=>s.trim().replace(/^"|"$/g,''));
+function parseCSVLineSimple(line, sep = ',') {
+    const out = []; let cur = ''; let inq = false;
+    for (let i = 0; i < line.length; i++) {
+        const c = line[i];
+        if (c === '"') { if (inq && line[i + 1] === '"') { cur += '"'; i++; } else { inq = !inq; } continue; }
+        if (c === sep && !inq) { out.push(cur); cur = ''; continue; } cur += c;
+    }
+    out.push(cur);
+    return out.map(s => s.trim().replace(/^"|"$/g, ''));
 }
 
-// ヘルパー関数 (utils.js に依存せずここで定義、あるいは utils.js から import も可能だがここでは簡易実装)
 function maybeNumber(v) {
     if (v === null || v === undefined) return v;
-    const n = parseFloat(String(v).replace(/[^0-9\.\-]/g,''));
-    return (String(v).trim()!=='' && !isNaN(n)) ? n : String(v).trim();
+    const n = parseFloat(String(v).replace(/[^0-9\.\-]/g, ''));
+    return (String(v).trim() !== '' && !isNaN(n)) ? n : String(v).trim();
 }
 
 // 自動保存
@@ -536,10 +516,9 @@ export function autoSave() {
     }, 2000);
 }
 
-// 初期化用
 export function setupAutoSave() {
     const allIds = [
-        ...INPUT_FIELDS.batter, ...INPUT_FIELDS.pitcher, 
+        ...INPUT_FIELDS.batter, ...INPUT_FIELDS.pitcher,
         ...INPUT_FIELDS.team, ...INPUT_FIELDS.prediction, ...INPUT_FIELDS.career
     ];
     allIds.forEach(id => {
@@ -548,17 +527,10 @@ export function setupAutoSave() {
     });
 }
 
-// ▼▼▼ CSVインポート機能 ▼▼▼
+// ==========================================
+// CSVインポート機能
+// ==========================================
 
-/**
- * CSVテキストを解析して打順表に反映させる関数
- * フォーマット想定: 選手名, 出塁率, 長打率
- * (ヘッダー行があっても自動判定でスキップします)
- */
-/**
- * CSVテキストを解析して打順表に反映させる関数 (修正版)
- * フォーマット想定: 選手名, 出塁率, 長打率
- */
 export function importLineupCSV(csvText) {
     try {
         const rows = csvText.split(/\r\n|\n/).map(row => row.trim()).filter(row => row);
@@ -566,9 +538,9 @@ export function importLineupCSV(csvText) {
 
         const tableBody = document.getElementById('lineup_tbody');
         if (!tableBody) throw new Error('打順表が見つかりません。「チーム」タブを開いてから実行してください。');
-        
+
         const trs = tableBody.querySelectorAll('tr');
-        
+
         // ヘッダー行スキップ判定
         let startIndex = 0;
         const firstRowCols = rows[0].split(',').map(c => c.trim());
@@ -584,36 +556,32 @@ export function importLineupCSV(csvText) {
 
             const cols = csvRow.split(',').map(c => c.trim());
             const inputs = trs[i].querySelectorAll('input');
-            
+
             if (inputs.length >= 3) {
                 // 名前 (1列目)
                 if (cols[0]) inputs[0].value = cols[0];
-                
+
                 // 出塁率 (2列目)
                 const obp = parseFloat(cols[1]);
                 if (!isNaN(obp)) {
-                    inputs[1].value = obp.toFixed(3); // ★修正: 必ず3桁にする (0.3 -> 0.300)
-                    inputs[1].dispatchEvent(new Event('input')); // ★修正: OPS再計算を強制発火
+                    inputs[1].value = obp.toFixed(3);
+                    inputs[1].dispatchEvent(new Event('input'));
                 }
-                
+
                 // 長打率 (3列目)
                 const slg = parseFloat(cols[2]);
                 if (!isNaN(slg)) {
-                    inputs[2].value = slg.toFixed(3); // ★修正: 必ず3桁にする
-                    inputs[2].dispatchEvent(new Event('input')); // ★修正: OPS再計算を強制発火
+                    inputs[2].value = slg.toFixed(3);
+                    inputs[2].dispatchEvent(new Event('input'));
                 }
 
                 updateCount++;
             }
         }
 
-        // 全体の再計算
         if (typeof window.updateLineupData === 'function') {
             window.updateLineupData();
         }
-        
-        // 完了メッセージ（邪魔ならコメントアウトしてください）
-        // alert(`${updateCount}人の選手データをインポートしました！`);
 
     } catch (e) {
         console.error(e);
