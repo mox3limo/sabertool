@@ -1,5 +1,5 @@
 /* sw.js */
-const CACHE_NAME = 'sabertool-v1';
+const CACHE_NAME = 'sabertool-v5';
 const urlsToCache = [
   './',
   './index.html',
